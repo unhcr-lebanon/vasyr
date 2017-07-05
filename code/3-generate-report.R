@@ -1,5 +1,28 @@
 #### Generate Rmd files for each chapter
 
+
+## Load the form
+
+mainDir <- getwd()
+## Load all required packages
+source(paste0(mainDir,"/code/0-packages.R"))
+library(koboloadeR)
+source("/home/edouard/R-project/koboloadeR/R/kobo_dico.R")
+
+##############################################
+## Load form
+
+
+cat("\n\n Build dictionnary from the xlsform \n")
+
+rm(form)
+form <- "form.xls"
+## Generate & Load dictionnary
+kobo_dico(form)
+dico <- read.csv(paste("data/dico_",form,".csv",sep=""), encoding="UTF-8", na.strings="")
+rm(form)
+
+
 ### Get the dico with list of chapter
 
 chapters <- as.data.frame(unique(dico$chapter))
@@ -43,26 +66,34 @@ for(i in 1:nrow(chapters))
   cat("## Provide below the name of the form in xsl form - format should be xls not xlsx", file=chapter.name , sep="\n", append=TRUE)
   cat("form <- \"form.xls\"", file=chapter.name , sep="\n", append=TRUE)
   cat("dico <- read.csv(paste0(mainDirroot,\"/data/dico_\",form,\".csv\"), encoding=\"UTF-8\", na.strings=\"\")", file=chapter.name , sep="\n", append=TRUE)
-  cat("```", file=chapter.name , sep="\n", append=TRUE)
 
+  cat("household <- read.csv(paste0(mainDirroot,\"/data/household.csv\"), encoding=\"UTF-8\", na.strings=\"\")", file=chapter.name , sep="\n", append=TRUE)
+  cat("case_number_details <- read.csv(paste0(mainDirroot,\"/data/case_number_details.csv\"), encoding=\"UTF-8\", na.strings=\"\")", file=chapter.name , sep="\n", append=TRUE)
+  cat("individual_biodata <- read.csv(paste0(mainDirroot,\"/data/individual_biodata.csv\"), encoding=\"UTF-8\", na.strings=\"\")", file=chapter.name , sep="\n", append=TRUE)
 
+  cat("## label Variables", file=chapter.name , sep="\n", append=TRUE)
+  cat("household <- kobo_label(household , dico)", file=chapter.name , sep="\n", append=TRUE)
+  cat("case_number_details <- kobo_label(case_number_details , dico)", file=chapter.name , sep="\n", append=TRUE)
+  cat("individual_biodata <- kobo_label(individual_biodata , dico)", file=chapter.name , sep="\n", append=TRUE)
+
+  cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
 
 
   chapterquestions <- dico[which(dico$chapter== chaptersname & dico$formpart=="questions"),
                            c("chapter", "name", "label", "type", "qrepeatlabel", "fullname") ]
 
-  levels(as.factor(as.character(dico[which(!(is.na(dico$chapter)) & dico$formpart=="questions"), c("type") ])))
+  #levels(as.factor(as.character(dico[which(!(is.na(dico$chapter)) & dico$formpart=="questions"), c("type") ])))
 
   for(j in 1:nrow(chapterquestions))
   {
-  # j <-1
+   #j <-3
   ## Now getting level for each questions
   questions.name <- as.character(chapterquestions[ j , c("fullname")])
   questions.shortname <- as.character(chapterquestions[ j , c("name")])
   questions.type <- as.character(chapterquestions[ j , c("type")])
   questions.frame <- as.character(chapterquestions[ j , c("qrepeatlabel")])
   questions.label <- as.character(chapterquestions[ j , c("label")])
-
+  questions.variable <- paste0(questions.frame,"$",questions.name)
   ## write question name
   cat("\n ",file=chapter.name , sep="\n",append=TRUE)
   cat(paste("## ", questions.label ,sep=""),file=chapter.name , sep="\n", append=TRUE)
@@ -71,8 +102,79 @@ for(i in 1:nrow(chapters))
 
 ######################################################################################################
 ######################################################################################################
-  if (questions.type =="date") {
-    cat(paste("Date question \n" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
+  if (questions.type =="select_one" ) {
+    cat(paste("Single choice question \n" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
+
+    ##############################################################################
+
+    cat(paste("### Tabulation" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
+    ## Open chunk
+    cat(paste0("```{r ", questions.name, ".tab, echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, fig.height=4}\n"), file=chapter.name, append=TRUE)
+
+    cat(paste("### Tabulation" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
+
+    cat(paste0("##Compute contengency table"),file=chapter.name ,sep="\n",append=TRUE)
+
+
+    cat(paste0("frequ <- table(",questions.variable,")"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0(questions.variable," <- factor(",questions.variable,", levels=names(frequ[order(frequ, decreasing = TRUE)]))"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("totalanswer <- nrow(",questions.frame,")"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("## subsetting to those who replied"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0(questions.frame,"1 <- ",questions.frame,"[ !(is.na(",questions.variable,")), ]"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("percentreponse <- paste0(round((nrow(",questions.frame,"1)/totalanswer)*100,digits=1),\"%\")"),file=chapter.name ,sep="\n",append=TRUE)
+
+    questions.variable2 <- paste0(questions.frame,"1$",questions.name)
+
+    cat(paste0("## and now the graph"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("ggplot(",questions.frame,"1, aes(",questions.variable2,")) +"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("geom_bar(aes(y = ..count.. / sapply(PANEL, FUN=function(x) sum(count[PANEL == x]))),"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("fill=\"#2a87c8\",colour=\"#2a87c8\") +"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("guides(fill=FALSE) +"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("ylab(\"Frequency\") +"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("scale_y_continuous(labels=percent)+"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("xlab(\"\") +"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("coord_flip() +"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("ggtitle(\"",questions.label,"\","),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("subtitle = paste0(\"Select_one question: Response rate to this question is \",percentreponse,\" of the total.\")) +"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("theme(plot.title=element_text(face=\"bold\", size=9),"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("plot.background = element_rect(fill = \"transparent\",colour = NA))"),file=chapter.name ,sep="\n",append=TRUE)
+
+
+
+
+
+
+    ## Close chunk
+    cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
+    ##############################################################################
+
+    cat(paste("### Chart" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
+    ## Open chunk
+    cat(paste0("\n```{r ", questions.name, ".chart , echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, fig.height=4}\n", sep = '\n'), file=chapter.name, append=TRUE)
+    ## Close chunk
+    cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
+    ##############################################################################
+
+    cat(paste("### Map" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
+    ## Open chunk
+    cat(paste0("\n```{r ", questions.name, ".map , echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, fig.height=4}\n", sep = '\n'), file=chapter.name, append=TRUE)
+    ## Close chunk
+    cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
+    ##############################################################################
+
+    cat(paste("### Crosstabulation" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
+    ## Open chunk
+    cat(paste0("\n```{r ", questions.name, ".cross , echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, fig.height=4}\n", sep = '\n'), file=chapter.name, append=TRUE)
+    ## Close chunk
+    cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
+    ##############################################################################
+
+    cat(paste("### Analysis of relationship" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
+    ## Open chunk
+    cat(paste0("\n```{r ", questions.name, ".rel, echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, fig.height=4}\n", sep = '\n'), file=chapter.name, append=TRUE)
+    ## Close chunk
+    cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
+
 
 ######################################################################################################
 ######################################################################################################
@@ -167,45 +269,8 @@ for(i in 1:nrow(chapters))
 
 ######################################################################################################
 ######################################################################################################
-  } else if (questions.type =="select_one" ) {
-    cat(paste("Single choice question \n" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
-
-    ##############################################################################
-
-    cat(paste("### Tabulation" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
-    ## Open chunk
-    cat(paste0("\n```{r ", questions.name, ".tab, echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, fig.height=4}\n", sep = '\n'), file=chapter.name, append=TRUE)
-    ## Close chunk
-    cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
-    ##############################################################################
-
-    cat(paste("### Chart" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
-    ## Open chunk
-    cat(paste0("\n```{r ", questions.name, ".chart , echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, fig.height=4}\n", sep = '\n'), file=chapter.name, append=TRUE)
-    ## Close chunk
-    cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
-    ##############################################################################
-
-    cat(paste("### Map" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
-    ## Open chunk
-    cat(paste0("\n```{r ", questions.name, ".map , echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, fig.height=4}\n", sep = '\n'), file=chapter.name, append=TRUE)
-    ## Close chunk
-    cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
-    ##############################################################################
-
-    cat(paste("### Crosstabulation" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
-    ## Open chunk
-    cat(paste0("\n```{r ", questions.name, ".cross , echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, fig.height=4}\n", sep = '\n'), file=chapter.name, append=TRUE)
-    ## Close chunk
-    cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
-    ##############################################################################
-
-    cat(paste("### Analysis of relationship" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
-    ## Open chunk
-    cat(paste0("\n```{r ", questions.name, ".rel, echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, fig.height=4}\n", sep = '\n'), file=chapter.name, append=TRUE)
-    ## Close chunk
-    cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
-
+  } else if (questions.type =="date") {
+    cat(paste("Date question \n" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
 
 ######################################################################################################
 ######################################################################################################
