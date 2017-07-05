@@ -236,5 +236,11 @@ for(i in 1:nrow(chapters))
 
 
 
-### Render the report now
+### Render now all reports
+
+cat(" Render now reports... \n")
+
+
 #rmarkdown::render('report-tabulation.Rmd')
+
+cat(" Done!! Reports are in the folder CODE > REPORT - You are now ready to start the qualitative analysis and the analysis workshops...")
