@@ -1,0 +1,44 @@
+---
+title: "Title \n Preliminary exploration of results - draft not for distribution - "
+author: "Prepared by UNHCR DOiA"
+date: "Amman, prepared on the `r format(Sys.Date(),  '%d %B %Y')`"
+output: 
+  word_document: 
+    fig_caption: yes
+    fig_height: 5
+    fig_width: 8
+    toc: yes
+    toc_depth: 2
+    reference_docx: style-unhcr-portrait.docx
+---
+
+```{r setup, include=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+mainDir <- getwd()
+mainDirroot <- substring(mainDir, 0 , nchar(mainDir)- 12)
+
+
+## Load all required packages
+source(paste0(mainDirroot,"/code/0-packages.R"))
+library(koboloadeR)
+
+## Provide below the name of the form in xsl form - format should be xls not xlsx
+form <- "form.xls"
+dico <- read.csv(paste(mainDirroot,"/data/dico_",form,".csv",sep=""), encoding="UTF-8", na.strings="")
+
+
+
+
+## Provide below the name of the datafile - shoudl be a csv file
+
+
+
+```
+
+
+
+***
+***
+# Executive summary and main findings
+
+***
+
