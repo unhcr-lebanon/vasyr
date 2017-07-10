@@ -30,6 +30,8 @@ chapters <- as.data.frame(unique(dico$chapter))
 names(chapters)[1] <- "Chapter"
 chapters <- as.data.frame(chapters[!is.na(chapters$Chapter), ])
 
+names(chapters)[1] <- "Chapter"
+
 disaggregation <- dico[which(dico$disaggregation %in% c("facet","correlate")& dico$formpart=="questions"),
                        c("chapter", "name", "label", "type", "qrepeatlabel", "fullname","disaggregation") ]
 
@@ -90,7 +92,7 @@ for(i in 1:nrow(chapters))
 
   for(j in 1:nrow(chapterquestions))
   {
-   #j <-5
+   #j <-8
   ## Now getting level for each questions
   questions.name <- as.character(chapterquestions[ j , c("fullname")])
   questions.shortname <- as.character(chapterquestions[ j , c("name")])
@@ -120,9 +122,17 @@ for(i in 1:nrow(chapters))
 
     cat(paste0("##Compute contengency table"),file=chapter.name ,sep="\n",append=TRUE)
 
-
+    frequ <- as.data.frame(table(questions.variable))
     cat(paste0("frequ <- as.data.frame(table(",questions.variable,"))"),file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("if (nrow(frequ)==0){ cat(\"No response for this question\") } else{"),file=chapter.name ,sep="\n",append=TRUE)
+
+    #cat(paste0("if (nrow(frequ)==0){ cat(\"No response for this question\") } else{"),file=chapter.name ,sep="\n",append=TRUE)
+
+    if (nrow(frequ) %in% c("0","1")){
+    cat(paste0("cat(\"No response recorded for this question...\")"),file=chapter.name ,sep="\n", append=TRUE)
+
+
+        } else{
+
     cat(paste0("## display table"),file=chapter.name ,sep="\n",append=TRUE)
 
     cat(paste0("## Reorder factor"),file=chapter.name ,sep="\n",append=TRUE)
@@ -143,11 +153,14 @@ for(i in 1:nrow(chapters))
     cat(paste0("## Reorder factor"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("frequ2[ ,1] = factor(frequ2[ ,1],levels(frequ2[ ,1])[order(frequ2$Freq, decreasing = TRUE)])"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("frequ2 <- frequ2[ order(frequ2[ , 1]) ,  ]"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("frequ2[ ,3] <- paste0(round(frequ2[ ,2]*100,digits=1),\"%\")"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("names(frequ2)[3] <- \"freqper2\""),file=chapter.name ,sep="\n",append=TRUE)
 
     cat(paste0("## and now the graph"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("ggplot(frequ2, aes(x=frequ2$Var1, y=frequ2$Freq)) +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("geom_bar(fill=\"#2a87c8\",colour=\"#2a87c8\", stat =\"identity\", width=.5) +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("guides(fill=FALSE) +"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("geom_label_repel(aes(y = Freq, label = freqper2), fill = \"#2a87c8\", color = 'white') +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("ylab(\"Frequency\") +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("scale_y_continuous(labels=percent)+"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("xlab(\"\") +"),file=chapter.name ,sep="\n",append=TRUE)
@@ -156,7 +169,8 @@ for(i in 1:nrow(chapters))
     cat(paste0("subtitle = paste0(\"Question response rate: \",percentreponse,\" .\")) +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("theme(plot.title=element_text(face=\"bold\", size=9),"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("plot.background = element_rect(fill = \"transparent\",colour = NA))"),file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("}"),file=chapter.name ,sep="\n",append=TRUE)
+    }
+    #cat(paste0("}"),file=chapter.name ,sep="\n",append=TRUE)
     ## Close chunk
     cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
     ##############################################################################
@@ -236,7 +250,16 @@ for(i in 1:nrow(chapters))
     cat(paste0("\n```{r ", questions.name, ".tab, echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, message=FALSE, comment = \"\", fig.height=4, size=\"small\"}\n", sep = '\n'), file=chapter.name, append=TRUE)
     cat(paste0("### Tabulation"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("##Compute contengency table"),file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("selectmultilist <- as.character(dico[dico$type==\"select_multiple\" & dico$listname==\"",questions.listname, "\" , c(\"fullname\")])"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("selectmultilist1 <- as.data.frame(dico[dico$type==\"select_multiple\" & dico$listname==\"",questions.listname, "\" & grepl(\"", questions.shortname,"\",dico$fullname)==TRUE , c(\"fullname\")])"),file=chapter.name ,sep="\n",append=TRUE)
+
+
+    cat(paste0("names(selectmultilist1)[1] <- \"check\""),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("check <- as.data.frame(names(",questions.frame ,"))"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("names(check)[1] <- \"check\""),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("check$id <- row.names(check)"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("check <- merge(x=check, y=selectmultilist1,by=\"check\")"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("selectmultilist <- as.character(check[ ,1])"),file=chapter.name ,sep="\n",append=TRUE)
+
     cat(paste0("## Reshape answers"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("data.selectmultilist <- ",questions.frame ,"[ selectmultilist ]"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("data.selectmultilist$id <- rownames(data.selectmultilist)"),file=chapter.name ,sep="\n",append=TRUE)
@@ -252,15 +275,20 @@ for(i in 1:nrow(chapters))
 
     cat(paste0("## display table"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("names(frequ)[1] <- \"", questions.shortname,"\""),file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("frequ[ ,3] <- paste0(round(nrow(frequ[ ,3])*100,digits=1),\"%\")"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("frequ[ ,3] <- paste0(round(frequ[ ,3]*100,digits=1),\"%\")"),file=chapter.name ,sep="\n",append=TRUE)
 
     cat(paste0("kable(frequ, caption=\"__Table__:", questions.label,"\") %>% kable_styling ( position = \"center\")"),file=chapter.name ,sep="\n",append=TRUE)
 
     cat(paste0("frequ1 <- castdata[castdata$Var1!=\"\", ]"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("frequ1[ ,4] <- paste0(round(frequ1[ ,3]*100,digits=1),\"%\")"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("names(frequ1)[4] <- \"freqper2\""),file=chapter.name ,sep="\n",append=TRUE)
+
     cat(paste0("## and now the graph"),file=chapter.name ,sep="\n",append=TRUE)
+
     cat(paste0("ggplot(frequ1, aes(x=Var1, y=freqper)) +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("geom_bar(fill=\"#2a87c8\",colour=\"#2a87c8\", stat =\"identity\", width=.5) +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("guides(fill=FALSE) +"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("geom_label_repel(aes(y = freqper, label = freqper2), fill = \"#2a87c8\", color = 'white') +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("ylab(\"Frequency\") +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("scale_y_continuous(labels=percent)+"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("xlab(\"\") +"),file=chapter.name ,sep="\n",append=TRUE)
@@ -327,23 +355,26 @@ for(i in 1:nrow(chapters))
 # End chapter
 }
 
-  #rmd <- list.files(pattern = '*-chapter.Rmd', recursive = T, include.dirs = T)
-  #chunks <- paste0("\n```{r child = '", rmd, "'}\n```\n")
-  #cat(chunks, sep = '\n')
+#rmd <- list.files(pattern = '*-chapter.Rmd', recursive = T, include.dirs = T)
+#chunks <- paste0("\n```{r child = '", rmd, "'}\n```\n")
+#cat(chunks, sep = '\n')
 ## Inser chapter child Rmd in the report-tabulation.Rmd
 
 
 #```{r child = 'chapter1.Rmd'}
 #```
 
-
-
-
 ### Render now all reports
-
 cat(" Render now reports... \n")
 
+for(i in 1:nrow(chapters)) {
+  chaptersname <- as.character(chapters[ i , 1])
+  cat(paste(i, " - Render word output report for ",chaptersname))
+  render(paste0("code/report/",i,"-", chaptersname, "-chapter.Rmd", sep="")) }
 
 #rmarkdown::render('report-tabulation.Rmd')
 
 cat(" Done!! Reports are in the folder CODE > REPORT - You are now ready to start the qualitative analysis and the analysis workshops...")
+
+
+
