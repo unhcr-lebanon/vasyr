@@ -38,7 +38,7 @@ disaggregation <- dico[which(dico$disaggregation %in% c("facet","correlate")& di
 ## for each chapter: create a Rmd file
 for(i in 1:nrow(chapters))
 {
-  # i <-5
+  # i <-3
   chaptersname <- as.character(chapters[ i , 1])
   cat(paste(i, " - Render chapter for ",as.character(chapters[ i , 1]),"\n" ))
   chapter.name <- paste("code/report/",i,"-", chaptersname, "-chapter.Rmd", sep="")
@@ -92,7 +92,7 @@ for(i in 1:nrow(chapters))
 
   for(j in 1:nrow(chapterquestions))
   {
-   #j <-8
+   #j <-4
   ## Now getting level for each questions
   questions.name <- as.character(chapterquestions[ j , c("fullname")])
   questions.shortname <- as.character(chapterquestions[ j , c("name")])
@@ -122,7 +122,7 @@ for(i in 1:nrow(chapters))
 
     cat(paste0("##Compute contengency table"),file=chapter.name ,sep="\n",append=TRUE)
 
-    frequ <- as.data.frame(table(questions.variable))
+    frequ <- as.data.frame(table(paste0(questions.variable)))
     cat(paste0("frequ <- as.data.frame(table(",questions.variable,"))"),file=chapter.name ,sep="\n",append=TRUE)
 
     #cat(paste0("if (nrow(frequ)==0){ cat(\"No response for this question\") } else{"),file=chapter.name ,sep="\n",append=TRUE)
