@@ -92,7 +92,7 @@ for(i in 1:nrow(chapters))
 
   for(j in 1:nrow(chapterquestions))
   {
-   #j <-4
+   #j <-3
   ## Now getting level for each questions
   questions.name <- as.character(chapterquestions[ j , c("fullname")])
   questions.shortname <- as.character(chapterquestions[ j , c("name")])
@@ -122,7 +122,8 @@ for(i in 1:nrow(chapters))
 
     cat(paste0("##Compute contengency table"),file=chapter.name ,sep="\n",append=TRUE)
 
-    frequ <- as.data.frame(table(paste0(questions.variable)))
+    frequ <- as.data.frame(table( get(paste0(questions.frame))[[questions.name]]))
+
     cat(paste0("frequ <- as.data.frame(table(",questions.variable,"))"),file=chapter.name ,sep="\n",append=TRUE)
 
     #cat(paste0("if (nrow(frequ)==0){ cat(\"No response for this question\") } else{"),file=chapter.name ,sep="\n",append=TRUE)
