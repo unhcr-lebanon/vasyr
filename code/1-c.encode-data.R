@@ -1,3 +1,10 @@
+#######################################
+### Clean and weight data         ####
+#######################################
+
+source("code/1-b.clean-data.R")
+
+
 ###################################################################################
 ##### Re-encode correctly the dataset
 cat("\n\n\nNow re-encode data and label variables \n\n\n\n")

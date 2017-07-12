@@ -1,7 +1,10 @@
-### clean and weigh data
+#######################################
+### Clean and weight data         ####
+#######################################
 
+source("code/1-a.loaddata.R")
 
-
+################################################################
 #### Check location
 
 location <- read.csv("data/location.csv")
@@ -31,8 +34,9 @@ location.vasyr333 <- unique(location.vasyr33[ ,c("section1.location.pcode", "sec
 
 write.csv(location.vasyr333, "data/location-to-be-checked.csv")
 
-####################################################################################################################
-### Tables with clean log
+
+################################################################
+#### Tables with clean log
 library(readxl)
 Correct.CaseNo <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "Vasyr2017_CaseNo_Correction")
 Correct.District <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "Vasyr2017_District_Correction")
@@ -49,8 +53,9 @@ names(Correct.form)
 # "formid"   "district"
 
 
-##################################################################################################################
-## Weighting data
+
+################################################################
+#### Weighting data
 
 weight <- read_excel("data/weight data 22_06-2017-2.xlsx",  sheet = " weight2206")
 location.vasyr.district <- as.data.frame(unique(household2$section1.location.location))
