@@ -82,6 +82,11 @@ for(i in 1:nrow(chapters))
   cat("case_number_details <- kobo_label(case_number_details , dico)", file=chapter.name , sep="\n", append=TRUE)
   cat("individual_biodata <- kobo_label(individual_biodata , dico)", file=chapter.name , sep="\n", append=TRUE)
 
+  cat("## Create weighted survey object", file=chapter.name , sep="\n", append=TRUE)
+  cat("household.survey <- svydesign(ids = ~ section1.location.district ,  data = household,  weights = ~Normalized.Weight ,  fpc = ~fpc )", file=chapter.name , sep="\n", append=TRUE)
+  cat("case_number_details.survey <- svydesign(ids = ~ section1.location.district ,  data = case_number_details ,  weights = ~Normalized.Weight ,  fpc = ~fpc )", file=chapter.name , sep="\n", append=TRUE)
+  cat("individual_biodata <- svydesign(ids = ~ section1.location.district ,  data = individual_biodata ,  weights = ~Normalized.Weight ,  fpc = ~fpc )", file=chapter.name , sep="\n", append=TRUE)
+
   cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
 
 
@@ -151,17 +156,30 @@ for(i in 1:nrow(chapters))
 
     cat(paste0("## Frequency table without NA"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("frequ2 <- as.data.frame(prop.table(table(", questions.variable,",useNA = \"no\")))"),file=chapter.name ,sep="\n",append=TRUE)
+
+    cat(paste0("## Frequency table with weight"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("frequ.weight <- as.data.frame(svymean(~ ",questions.name,", design = ",questions.frame,".survey))"),file=chapter.name ,sep="\n",append=TRUE)
+
+    cat(paste0("## Binding the two"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("frequ3 <- cbind(frequ2,frequ.weight)"),file=chapter.name ,sep="\n",append=TRUE)
+
+
     cat(paste0("## Reorder factor"),file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("frequ2[ ,1] = factor(frequ2[ ,1],levels(frequ2[ ,1])[order(frequ2$Freq, decreasing = TRUE)])"),file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("frequ2 <- frequ2[ order(frequ2[ , 1]) ,  ]"),file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("frequ2[ ,3] <- paste0(round(frequ2[ ,2]*100,digits=1),\"%\")"),file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("names(frequ2)[3] <- \"freqper2\""),file=chapter.name ,sep="\n",append=TRUE)
+#    cat(paste0("frequ2[ ,1] = factor(frequ2[ ,1],levels(frequ2[ ,1])[order(frequ2$Freq, decreasing = TRUE)])"),file=chapter.name ,sep="\n",append=TRUE)
+#    cat(paste0("frequ2 <- frequ2[ order(frequ2[ , 1]) ,  ]"),file=chapter.name ,sep="\n",append=TRUE)
+#    cat(paste0("frequ2[ ,3] <- paste0(round(frequ2[ ,2]*100,digits=1),\"%\")"),file=chapter.name ,sep="\n",append=TRUE)
+#    cat(paste0("names(frequ2)[3] <- \"freqper2\""),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("frequ3[ ,1] = factor(frequ3[ ,1],levels(frequ3[ ,1])[order(frequ3$mean, decreasing = TRUE)])"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("frequ3 <- frequ3[ order(frequ3[ , 1]) ,  ]"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("frequ3[ ,5] <- paste0(round(frequ3[ ,3]*100,digits=1),\"%\")"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("names(frequ3)[5] <- \"freqper2\""),file=chapter.name ,sep="\n",append=TRUE)
+
 
     cat(paste0("## and now the graph"),file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("ggplot(frequ2, aes(x=frequ2$Var1, y=frequ2$Freq)) +"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("ggplot(frequ3, aes(x=frequ3$Var1, y=frequ3$mean)) +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("geom_bar(fill=\"#2a87c8\",colour=\"#2a87c8\", stat =\"identity\", width=.5) +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("guides(fill=FALSE) +"),file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("geom_label_repel(aes(y = Freq, label = freqper2), fill = \"#2a87c8\", color = 'white') +"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("geom_label_repel(aes(y = mean, label = freqper2), fill = \"#2a87c8\", color = 'white') +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("ylab(\"Frequency\") +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("scale_y_continuous(labels=percent)+"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("xlab(\"\") +"),file=chapter.name ,sep="\n",append=TRUE)
@@ -208,9 +226,15 @@ for(i in 1:nrow(chapters))
 
     cat(paste0("frequ <- as.data.frame(table(",questions.variable,"))"),file=chapter.name ,sep="\n",append=TRUE)
 
+    ## Check the lenght of the table to see if we can display it or not...
+    frequ <- as.data.frame(table( get(paste0(questions.frame))[[questions.name]]))
+
+    if (nrow(frequ) > 10){
+      cat(paste0("cat(\"There's too many potential values to display. We will only show the histogramm. \n \")"),file=chapter.name ,sep="\n", append=TRUE)
+    } else{
     cat(paste0("## display table"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("kable(frequ, caption=\"__Table__:", questions.label,"\") %>% kable_styling ( position = \"center\")"),file=chapter.name ,sep="\n",append=TRUE)
-
+    }
     cat(paste0("#  regular histogram"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("ggplot(data=frequ, aes(x=frequ$Var1, y=frequ$Freq)) +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("geom_bar(fill=\"#2a87c8\",colour=\"white\", stat =\"identity\", width=.5)+"),file=chapter.name ,sep="\n",append=TRUE)
@@ -248,7 +272,7 @@ for(i in 1:nrow(chapters))
 
     cat(paste("### Tabulation" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
     ## Open chunk
-    cat(paste0("\n```{r ", questions.name, ".tab, echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, message=FALSE, comment = \"\", fig.height=4, size=\"small\"}\n", sep = '\n'), file=chapter.name, append=TRUE)
+    cat(paste0("\n```{r ", questions.name, ".tab, echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, message=FALSE, comment = \"\", fig.height=8, size=\"small\"}\n", sep = '\n'), file=chapter.name, append=TRUE)
     cat(paste0("### Tabulation"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("##Compute contengency table"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("selectmultilist1 <- as.data.frame(dico[dico$type==\"select_multiple\" & dico$listname==\"",questions.listname, "\" & grepl(\"", questions.shortname,"\",dico$fullname)==TRUE , c(\"fullname\")])"),file=chapter.name ,sep="\n",append=TRUE)

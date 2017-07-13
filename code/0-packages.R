@@ -177,6 +177,7 @@ library(koRpus)
 library(tables)
 library(rmarkdown)
 
+library(survey)
 library(ggrepel)
 
 #gpclibPermit()
