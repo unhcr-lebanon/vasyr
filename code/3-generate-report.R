@@ -1,6 +1,11 @@
 #### Generate Rmd files for each chapter
 
 
+### Load the data
+household <- read.csv("data/household.csv", encoding="UTF-8", na.strings="NA")
+case_number_details <- read.csv("data/case_number_details.csv", encoding="UTF-8", na.strings="NA")
+individual_biodata <- read.csv("data/individual_biodata.csv", encoding="UTF-8", na.strings="NA")
+
 ## Load the form
 
 mainDir <- getwd()
@@ -8,7 +13,7 @@ mainDir <- getwd()
 source(paste0(mainDir,"/code/0-packages.R"))
 library(koboloadeR)
 
-##############################################
+###Form##########################################
 ## Load form
 
 
@@ -36,6 +41,9 @@ disaggregation <- dico[which(dico$disaggregation %in% c("facet","correlate")& di
                        c("chapter", "name", "label", "type", "qrepeatlabel", "fullname","disaggregation") ]
 
 ## for each chapter: create a Rmd file
+
+##Loop.chapter####################################################################################################
+
 for(i in 1:nrow(chapters))
 {
   # i <-3
@@ -85,7 +93,7 @@ for(i in 1:nrow(chapters))
   cat("## Create weighted survey object", file=chapter.name , sep="\n", append=TRUE)
   cat("household.survey <- svydesign(ids = ~ section1.location.district ,  data = household,  weights = ~Normalized.Weight ,  fpc = ~fpc )", file=chapter.name , sep="\n", append=TRUE)
   cat("case_number_details.survey <- svydesign(ids = ~ section1.location.district ,  data = case_number_details ,  weights = ~Normalized.Weight ,  fpc = ~fpc )", file=chapter.name , sep="\n", append=TRUE)
-  cat("individual_biodata <- svydesign(ids = ~ section1.location.district ,  data = individual_biodata ,  weights = ~Normalized.Weight ,  fpc = ~fpc )", file=chapter.name , sep="\n", append=TRUE)
+  cat("individual_biodata.survey <- svydesign(ids = ~ section1.location.district ,  data = individual_biodata ,  weights = ~Normalized.Weight ,  fpc = ~fpc )", file=chapter.name , sep="\n", append=TRUE)
 
   cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
 
@@ -94,10 +102,11 @@ for(i in 1:nrow(chapters))
                            c("chapter", "name", "label", "type", "qrepeatlabel", "fullname","listname") ]
 
   #levels(as.factor(as.character(dico[which(!(is.na(dico$chapter)) & dico$formpart=="questions"), c("type") ])))
+##Loop.questions####################################################################################################
 
   for(j in 1:nrow(chapterquestions))
   {
-   #j <-3
+   #j <-1
   ## Now getting level for each questions
   questions.name <- as.character(chapterquestions[ j , c("fullname")])
   questions.shortname <- as.character(chapterquestions[ j , c("name")])
@@ -106,37 +115,43 @@ for(i in 1:nrow(chapters))
   questions.label <- as.character(chapterquestions[ j , c("label")])
   questions.listname <- as.character(chapterquestions[ j , c("listname")])
   questions.variable <- paste0(questions.frame,"$",questions.name)
+
+
+  cat(paste("\n", j, " - Render question: ", questions.variable,"\n" ))
+
   ## write question name
   cat("\n ",file=chapter.name , sep="\n",append=TRUE)
   cat(paste("## ", questions.label ,sep=""),file=chapter.name , sep="\n", append=TRUE)
 
   ## Now create para based on question type
 
-######################################################################################################
-######################################################################################################
-  if (questions.type =="select_one" ) {
-    cat(paste("Single choice question \n" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
 
-    ##############################################################################
+###selectone###################################################################################################
+  if (questions.type =="select_one" ) {
+    cat(paste("Single choice question in data frame: ",questions.frame ,"\n\n",sep=""),file=chapter.name ,sep="\n",append=TRUE)
+
+    ###selectone.tab######################################################################
+    ## compute frequency
+    frequ <- as.data.frame(table( get(paste0(questions.frame))[[questions.name]]))
+    figheight <- as.integer(nrow(frequ))
+    if ( figheight==0){ figheight<-1} else {figheight<-figheight/1.2}
 
     cat(paste("### Tabulation" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
     ## Open chunk
-    cat(paste0("```{r ", questions.name, ".tab, echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, message=FALSE, comment = \"\", fig.height=4, size=\"small\"}\n"), file=chapter.name, append=TRUE)
+    cat(paste0("```{r ", questions.name, ".tab, echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, message=FALSE, comment = \"\", fig.height=",figheight,", size=\"small\"}\n"), file=chapter.name, append=TRUE)
 
     cat(paste("### Tabulation" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
 
     cat(paste0("##Compute contengency table"),file=chapter.name ,sep="\n",append=TRUE)
 
-    frequ <- as.data.frame(table( get(paste0(questions.frame))[[questions.name]]))
 
     cat(paste0("frequ <- as.data.frame(table(",questions.variable,"))"),file=chapter.name ,sep="\n",append=TRUE)
 
     #cat(paste0("if (nrow(frequ)==0){ cat(\"No response for this question\") } else{"),file=chapter.name ,sep="\n",append=TRUE)
 
     if (nrow(frequ) %in% c("0","1")){
-    cat(paste0("cat(\"No response recorded for this question...\")"),file=chapter.name ,sep="\n", append=TRUE)
-
-
+    cat(paste0("cat(\"No responses recorded for this question...\")"),file=chapter.name , sep="\n", append=TRUE)
+    cat("No responses recorded for this question...\n")
         } else{
 
     cat(paste0("## display table"),file=chapter.name ,sep="\n",append=TRUE)
@@ -158,7 +173,7 @@ for(i in 1:nrow(chapters))
     cat(paste0("frequ2 <- as.data.frame(prop.table(table(", questions.variable,",useNA = \"no\")))"),file=chapter.name ,sep="\n",append=TRUE)
 
     cat(paste0("## Frequency table with weight"),file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("frequ.weight <- as.data.frame(svymean(~ ",questions.name,", design = ",questions.frame,".survey))"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("frequ.weight <- as.data.frame(svymean(~ ",questions.name,", design = ",questions.frame,".survey, na.rm=TRUE))"),file=chapter.name ,sep="\n",append=TRUE)
 
     cat(paste0("## Binding the two"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("frequ3 <- cbind(frequ2,frequ.weight)"),file=chapter.name ,sep="\n",append=TRUE)
@@ -175,9 +190,10 @@ for(i in 1:nrow(chapters))
     cat(paste0("names(frequ3)[5] <- \"freqper2\""),file=chapter.name ,sep="\n",append=TRUE)
 
 
+    cat(paste0("\n"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("## and now the graph"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("ggplot(frequ3, aes(x=frequ3$Var1, y=frequ3$mean)) +"),file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("geom_bar(fill=\"#2a87c8\",colour=\"#2a87c8\", stat =\"identity\", width=.5) +"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("geom_bar(fill=\"#2a87c8\",colour=\"#2a87c8\", stat =\"identity\", width=.8) +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("guides(fill=FALSE) +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("geom_label_repel(aes(y = mean, label = freqper2), fill = \"#2a87c8\", color = 'white') +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("ylab(\"Frequency\") +"),file=chapter.name ,sep="\n",append=TRUE)
@@ -185,22 +201,71 @@ for(i in 1:nrow(chapters))
     cat(paste0("xlab(\"\") +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("coord_flip() +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("ggtitle(\"",questions.label,"\","),file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("subtitle = paste0(\"Question response rate: \",percentreponse,\" .\")) +"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("subtitle = paste0(\"Weighted results. Question response rate: \",percentreponse,\" .\")) +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("theme(plot.title=element_text(face=\"bold\", size=9),"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("plot.background = element_rect(fill = \"transparent\",colour = NA))"),file=chapter.name ,sep="\n",append=TRUE)
     }
     #cat(paste0("}"),file=chapter.name ,sep="\n",append=TRUE)
     ## Close chunk
     cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
-    ##############################################################################
 
-
+    ##selectone.rel#######################################################################
     cat(paste("### Analysis of relationship" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
-    ## Open chunk
-    cat(paste0("\n```{r ", questions.name, ".rel, echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, message=FALSE, comment = \"\", fig.height=4, size=\"small\"}\n", sep = '\n'), file=chapter.name, append=TRUE)
-    ## Close chunk
-    cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
+    if (nrow(frequ) %in% c("0","1")){
+      cat(paste0("cat(\"No responses recorded for this question...\")"),file=chapter.name , sep="\n", append=TRUE)
+      cat("No responses recorded for this question...\n")
+    } else{
+    for(h in 1:nrow(disaggregation))
+    {
+      #h <-1
+      ## Now getting level for each questions
+      disag.name <- as.character(disaggregation[ h , c("fullname")])
+      disag.shortname <- as.character(disaggregation[ h , c("name")])
+      disag.type <- as.character(disaggregation[ h , c("type")])
+      disag.frame <- as.character(disaggregation[ h , c("qrepeatlabel")])
+      disag.label <- as.character(disaggregation[ h , c("label")])
+      disag.listname <- as.character(disaggregation[ h , c("listname")])
+      disag.variable <- paste0(questions.frame,"$",disag.name)
 
+      # Get number levels to set up chart height
+      figheight <- nlevels( get(paste0(questions.frame))[[disag.name]])
+      if ( figheight==0){ figheight<-1} else {figheight<-figheight/1.3}
+
+      ## Open chunk
+     cat(paste0("\n```{r ", questions.name,h, ".rel, echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, message=FALSE, comment = \"\", fig.height=",figheight,", size=\"small\"}\n"), file=chapter.name, append=TRUE)
+     cat(paste("\n", h, " - Render disaggregation: ", disag.label, "for question: ", questions.label,"\n" ))
+     cat(paste0("crosssfrequ.weight <-as.data.frame(prop.table(svytable(~", questions.name ," + ", disag.name,", design =",questions.frame ,".survey  ), margin = 2))"),file=chapter.name ,sep="\n",append=TRUE)
+     cat(paste0("names(crosssfrequ.weight)[1] <- \"quest\""),file=chapter.name ,sep="\n",append=TRUE)
+     cat(paste0("names(crosssfrequ.weight)[2] <- \"disag\""),file=chapter.name ,sep="\n",append=TRUE)
+     cat(paste0("crosssfrequ.weight$Freq2 <- paste0(round(crosssfrequ.weight$Freq*100,digits=1),\"%\")"),file=chapter.name ,sep="\n",append=TRUE)
+
+
+     cat(paste0("## Reorder factor"),file=chapter.name ,sep="\n",append=TRUE)
+     cat(paste0("cross <- dcast(crosssfrequ.weight, disag  ~ quest, value.var = \"Freq\")"),file=chapter.name ,sep="\n",append=TRUE)
+     cat(paste0("cross <- cross[ order(cross[ ,2], decreasing = TRUE) ,  ]"),file=chapter.name ,sep="\n",append=TRUE)
+     cat(paste0("crosssfrequ.weight$disag <- factor(crosssfrequ.weight$disag, levels = as.character(cross[ ,1]))"),file=chapter.name ,sep="\n",append=TRUE)
+
+     cat(paste0("\n"),file=chapter.name ,sep="\n",append=TRUE)
+     cat(paste0("## and now the graph"),file=chapter.name ,sep="\n",append=TRUE)
+     cat(paste0("ggplot(crosssfrequ.weight, aes(fill=crosssfrequ.weight$quest, y=crosssfrequ.weight$Freq, x=crosssfrequ.weight$disag)) +"),file=chapter.name ,sep="\n",append=TRUE)
+     cat(paste0("geom_bar(colour=\"#2a87c8\", stat =\"identity\", width=.8, aes(fill = quest), position = position_stack(reverse = TRUE)) +"),file=chapter.name ,sep="\n",append=TRUE)
+     cat(paste0("guides(fill=FALSE) +"),file=chapter.name ,sep="\n",append=TRUE)
+     cat(paste0("geom_label_repel(aes(label = Freq2), fill = \"#2a87c8\", color = 'white') +"),file=chapter.name ,sep="\n",append=TRUE)
+     cat(paste0("ylab(\"Frequency\") +"),file=chapter.name ,sep="\n",append=TRUE)
+     #cat(paste0("facet_wrap(~disag, ncol=3) +"),file=chapter.name ,sep="\n",append=TRUE)
+     cat(paste0("scale_y_continuous(labels=percent)+"),file=chapter.name ,sep="\n",append=TRUE)
+     cat(paste0("xlab(\"\") +"),file=chapter.name ,sep="\n",append=TRUE)
+     cat(paste0("coord_flip() +"),file=chapter.name ,sep="\n",append=TRUE)
+     cat(paste0("ggtitle(\"",questions.label,"\","),file=chapter.name ,sep="\n",append=TRUE)
+     cat(paste0("subtitle = paste0(\"Weighted results. Question response rate: \",percentreponse,\" .\")) +"),file=chapter.name ,sep="\n",append=TRUE)
+     cat(paste0("theme(plot.title=element_text(face=\"bold\", size=9),"),file=chapter.name ,sep="\n",append=TRUE)
+     cat(paste0("plot.background = element_rect(fill = \"transparent\",colour = NA))"),file=chapter.name ,sep="\n",append=TRUE)
+
+    ## Close chunk
+     cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
+    }
+    }
+    ###selectone.quali####################################################################
     cat(paste("### Qualitative elements\n"),file=chapter.name ,sep="\n",append=TRUE)
     ## Open chunk
     cat(paste0("#### __Reflect__: Data quality and or suggestions to change questions  \n"),file=chapter.name ,sep="\n",append=TRUE)
@@ -212,46 +277,40 @@ for(i in 1:nrow(chapters))
     cat(paste0("#### __Classify__: Level of sensitivity for the information  \n"),file=chapter.name ,sep="\n",append=TRUE)
     cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
 
-######################################################################################################
-######################################################################################################
+##Decimal####################################################################################################
   } else if (questions.type =="decimal" | questions.type =="integer" ) {
-    cat(paste("Numeric question \n" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste("Numeric question  in data frame: ",questions.frame  ,"\n\n",sep=""),file=chapter.name ,sep="\n",append=TRUE)
 
-    ##############################################################################
+    ####Decimal.tabulation########################################################################
     cat(paste("### Tabulation\n" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
 
     ## Open chunk
     cat(paste0("```{r ", questions.name, ".tab, echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, message=FALSE, comment = \"\", fig.height=4, size=\"small\"}\n", sep = '\n'), file=chapter.name, append=TRUE)
-
-
     cat(paste0("frequ <- as.data.frame(table(",questions.variable,"))"),file=chapter.name ,sep="\n",append=TRUE)
-
     ## Check the lenght of the table to see if we can display it or not...
     frequ <- as.data.frame(table( get(paste0(questions.frame))[[questions.name]]))
-
     if (nrow(frequ) > 10){
-      cat(paste0("cat(\"There's too many potential values to display. We will only show the histogramm. \n \")"),file=chapter.name ,sep="\n", append=TRUE)
+      cat(paste0("cat(\"There's too many potential values to display. We will only show the histogram. \n \")"),file=chapter.name ,sep="\n", append=TRUE)
     } else{
     cat(paste0("## display table"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("kable(frequ, caption=\"__Table__:", questions.label,"\") %>% kable_styling ( position = \"center\")"),file=chapter.name ,sep="\n",append=TRUE)
     }
     cat(paste0("#  regular histogram"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("ggplot(data=frequ, aes(x=frequ$Var1, y=frequ$Freq)) +"),file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("geom_bar(fill=\"#2a87c8\",colour=\"white\", stat =\"identity\", width=.5)+"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("geom_bar(fill=\"#2a87c8\",colour=\"white\", stat =\"identity\", width=.8)+"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("labs(x=\"\", y=\"Count\")+"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("theme(plot.title=element_text(face=\"bold\", size=9), plot.background = element_rect(fill = \"transparent\",colour = NA))"),file=chapter.name ,sep="\n",append=TRUE)
     ## Close chunk
     cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
-    ##############################################################################
 
+    ###Decimal.relation###########################################################################
     cat(paste("### Analysis of relationship" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
-
     ## Open chunk
     cat(paste0("\n```{r ", questions.name, ".rel, echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, message=FALSE, comment = \"\", fig.height=4, size=\"small\"}\n", sep = '\n'), file=chapter.name, append=TRUE)
     ## Close chunk
     cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
 
-
+    ####decimal.quali##########################################################################
     cat(paste("### Qualitative elements  \n"),file=chapter.name ,sep="\n",append=TRUE)
     ## Open chunk
     cat(paste0("#### __Reflect__: Data quality and or suggestions to change questions  \n"),file=chapter.name ,sep="\n",append=TRUE)
@@ -263,12 +322,11 @@ for(i in 1:nrow(chapters))
     cat(paste0("#### __Classify__: Level of sensitivity for the information  \n"),file=chapter.name ,sep="\n",append=TRUE)
     cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
 
-######################################################################################################
-######################################################################################################
+##select.multi####################################################################################################
   } else if ( questions.type =="select_multiple_d" ) {
-    cat(paste("Multiple choice question \n" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste("Multiple choice question  in data frame: ",questions.frame  ,"\n\n",sep=""),file=chapter.name ,sep="\n",append=TRUE)
 
-    ##############################################################################
+    ###select.multi.tab######################################################################
 
     cat(paste("### Tabulation" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
     ## Open chunk
@@ -308,10 +366,11 @@ for(i in 1:nrow(chapters))
     cat(paste0("frequ1[ ,4] <- paste0(round(frequ1[ ,3]*100,digits=1),\"%\")"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("names(frequ1)[4] <- \"freqper2\""),file=chapter.name ,sep="\n",append=TRUE)
 
+    cat(paste0("\n"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("## and now the graph"),file=chapter.name ,sep="\n",append=TRUE)
 
     cat(paste0("ggplot(frequ1, aes(x=Var1, y=freqper)) +"),file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("geom_bar(fill=\"#2a87c8\",colour=\"#2a87c8\", stat =\"identity\", width=.5) +"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("geom_bar(fill=\"#2a87c8\",colour=\"#2a87c8\", stat =\"identity\", width=.8) +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("guides(fill=FALSE) +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("geom_label_repel(aes(y = freqper, label = freqper2), fill = \"#2a87c8\", color = 'white') +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("ylab(\"Frequency\") +"),file=chapter.name ,sep="\n",append=TRUE)
@@ -323,7 +382,7 @@ for(i in 1:nrow(chapters))
     cat(paste0("theme(plot.title=element_text(face=\"bold\", size=9),"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("plot.background = element_rect(fill = \"transparent\",colour = NA))"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
-    ##############################################################################
+    ###select.multi.rel######################################################################
 
 
     cat(paste("### Analysis of relationship" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
@@ -346,15 +405,13 @@ for(i in 1:nrow(chapters))
 
 
 
-######################################################################################################
-######################################################################################################
+####date###############################################################################################
   } else if (questions.type =="date") {
-    cat(paste("Date question \n" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste("Date question  in data frame: ",questions.frame,"\n\n",sep=""),file=chapter.name ,sep="\n",append=TRUE)
 
-######################################################################################################
-######################################################################################################
+####text#############################################################################################
   } else if ( questions.type =="text" ) {
-    cat(paste("Open ended question \n" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste("Open ended question  in data frame: ",questions.frame,"\n\n", sep=""),file=chapter.name ,sep="\n",append=TRUE)
 
 
     cat(paste("List of given answers \n" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
