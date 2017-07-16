@@ -9,7 +9,6 @@ source("code/1-b.clean-data.R")
 ##### Re-encode correctly the dataset
 cat("\n\n\nNow re-encode data and label variables \n\n\n\n")
 
-source("/home/edouard/R-project/koboloadeR/R/kobo_split_multiple.R")
 
 cat("\n\n\n Household \n\n\n\n")
 household <- kobo_split_multiple(household, dico)
