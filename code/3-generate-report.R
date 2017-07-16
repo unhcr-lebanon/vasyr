@@ -229,10 +229,24 @@ for(i in 1:nrow(chapters))
 
       # Get number levels to set up chart height
       figheight <- nlevels( get(paste0(questions.frame))[[disag.name]])
-      if ( figheight==0){ figheight<-1} else {figheight<-figheight/1.3}
+      if ( figheight==0){ figheight<-1}
+      else if ( figheight==1) {figheight<-"2"}
+      else if ( figheight==2) {figheight<-"3"}
+      else if ( figheight==3) {figheight<-"3"}
+      else if ( figheight==4) {figheight<-"4"}
+      else if ( figheight==5) {figheight<-"4"}
+      else if ( figheight==6) {figheight<-"5"}
+      else if ( figheight==7) {figheight<-"6"}
+      else if ( figheight==8) {figheight<-"7"}
+      else if ( figheight==9) {figheight<-"8"}
+      else if ( figheight==10) {figheight<-"9"}
+      else if ( figheight>=11) {figheight<-"10"}
 
       ## Open chunk
      cat(paste0("\n```{r ", questions.name,h, ".rel, echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, message=FALSE, comment = \"\", fig.height=",figheight,", size=\"small\"}\n"), file=chapter.name, append=TRUE)
+
+     cat(paste("\n", h, " - Check dependency: ", disag.label, "for question: ", questions.label,"\n" ))
+
      cat(paste("\n", h, " - Render disaggregation: ", disag.label, "for question: ", questions.label,"\n" ))
      cat(paste0("crosssfrequ.weight <-as.data.frame(prop.table(svytable(~", questions.name ," + ", disag.name,", design =",questions.frame ,".survey  ), margin = 2))"),file=chapter.name ,sep="\n",append=TRUE)
      cat(paste0("names(crosssfrequ.weight)[1] <- \"quest\""),file=chapter.name ,sep="\n",append=TRUE)
