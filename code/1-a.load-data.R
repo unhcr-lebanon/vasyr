@@ -14,7 +14,6 @@ mainDir <- getwd()
 ## Load all required packages
 source(paste0(mainDir,"/code/0-packages.R"))
 library(koboloadeR)
-source("/home/edouard/R-project/koboloadeR/R/kobo_dico.R")
 
 ##############################################
 ## Load form
