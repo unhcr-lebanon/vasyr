@@ -3,8 +3,9 @@
 
 ## subset all select questions
 #levels(dico$type)
+# names(dico)
 
-selectvariable <- dico[dico$type %in% c("select_multiple_d","select_one"), c("chapter", "name", "label", "type", "qrepeatlabel", "fullname","disaggregation")]
+selectvariable <- dico[dico$type %in% c("select_multiple_d","select_one") & !(is.na(dico$correlate)), c("chapter", "name", "label", "type", "qrepeatlabel", "fullname","disaggregation")]
 selectvariable.household <- selectvariable[selectvariable$qrepeatlabel %in% c("household"), ]
 selectvariable.household1 <- as.character(selectvariable.household$fullname)
 
@@ -28,7 +29,8 @@ chiquare.resultall$p.value <- 0.999
 chiquare.resultall$frame <- "frame"
 
 ## 'x' and 'y' must have at least 2 levels
-question.target <- "section3_household.housing.rent_period"
+question.name <- "section3_household.housing.rent_period"
+question.frame <- "section3_household.housing.rent_period"
 
 nlevels(data[ ,question.target])
 #ncol(data[ ,question.target])
@@ -40,7 +42,7 @@ for (l in 2:nrow(data) ) {
   chiquare.result <- data.frame(c(1))
   names(chiquare.result)[1] <- "id"
   chiquare.result$id <- l
-  chiquare.result$target <- question.target
+  chiquare.result$target <- question.name
   chiquare.result$tested <-  as.character(names(data)[l])
   if (chiquare.result$target==chiquare.result$tested){ chiquare.result$p.value <- 1 }
   else{ chiquare.result$p.value <- chisq.test(data[ ,15], data[ ,l])$p.value}
