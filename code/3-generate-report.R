@@ -46,7 +46,7 @@ disaggregation <- dico[which(dico$disaggregation %in% c("facet","correlate")& di
 
 for(i in 1:nrow(chapters))
 {
-  # i <-3
+  # i <-11
   chaptersname <- as.character(chapters[ i , 1])
   cat(paste(i, " - Render chapter for ",as.character(chapters[ i , 1]),"\n" ))
   chapter.name <- paste("code/report/",i,"-", chaptersname, "-chapter.Rmd", sep="")
@@ -108,7 +108,7 @@ for(i in 1:nrow(chapters))
 
   for(j in 1:nrow(chapterquestions))
   {
-   #j <-1
+   #j <-5
   ## Now getting level for each questions
   questions.name <- as.character(chapterquestions[ j , c("fullname")])
   questions.shortname <- as.character(chapterquestions[ j , c("name")])
