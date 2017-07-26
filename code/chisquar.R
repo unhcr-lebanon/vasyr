@@ -17,8 +17,8 @@ selectdf <- join(x=selectvariable.household, y=check, by="fullname",  type="left
 selectdf <- selectdf[!is.na(selectdf$id), ]
 selectvariable.household1 <- as.character(selectdf$fullname)
 
-data <- household[ , selectvariable.household1 ]
-data <- kobo_label(data)
+#data <- household[ , selectvariable.household1 ]
+##data <- kobo_label(data)
 #names(data)
 
 # Empty frame to get results
@@ -38,12 +38,12 @@ chiquare.resultall$df <- 0.999
 #chiquare.resultall$fisher <- 0.999
 
 # l <- 3
-for (l in 1:ncol(data) ) {
+for (l in 1:nrow(selectdf) ) {
   chiquare.result <- data.frame(c(1))
   names(chiquare.result)[1] <- "id"
   chiquare.result$id <- l
   chiquare.result[1, c("target")] <- questions.name
-  chiquare.result[1, c("tested")] <-  as.character(names(data)[l])
+  chiquare.result[1, c("tested")] <-  as.character(selectdf[l, c("fullname")])
   chiquare.result[1, c("frame")]  <- questions.frame
 
   ## getting labels
@@ -108,8 +108,8 @@ for (i in 1:nrow(chiquare.true)) {
            mar=c(1,1,4,1), ## margin of plots
          #  order ="hclust", ## How records are ordered hierarchicla clustering
           # addrect=2, ##draw rectangles around the chart of corrrlation matrix based on the results of hierarchical clustering
-           title=paste0("Correlation between \n \"",target.label ,"\" \n  & \"",tested.label, "\""  ), ## Title
-           diag= FALSE)
+           title=paste0("Correlation between \n \"",target.label ,"\" \n  & \"",tested.label, "\""  )) #, ## Title
+         #  diag= FALSE)
   dev.off()
 }
 

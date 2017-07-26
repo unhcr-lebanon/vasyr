@@ -6,6 +6,11 @@ household <- read.csv("data/household.csv", encoding="UTF-8", na.strings="NA")
 case_number_details <- read.csv("data/case_number_details.csv", encoding="UTF-8", na.strings="NA")
 individual_biodata <- read.csv("data/individual_biodata.csv", encoding="UTF-8", na.strings="NA")
 
+## label Variables
+household <- kobo_label(household , dico)
+case_number_details <- kobo_label(case_number_details , dico)
+individual_biodata <- kobo_label(individual_biodata , dico)
+
 ## Load the form
 
 mainDir <- getwd()
@@ -46,7 +51,7 @@ disaggregation <- dico[which(dico$disaggregation %in% c("facet","correlate")& di
 
 for(i in 1:nrow(chapters))
 {
-  # i <-11
+  # i <-1
   chaptersname <- as.character(chapters[ i , 1])
   cat(paste(i, " - Render chapter for ",as.character(chapters[ i , 1]),"\n" ))
   chapter.name <- paste("code/report/",i,"-", chaptersname, "-chapter.Rmd", sep="")
@@ -97,6 +102,11 @@ for(i in 1:nrow(chapters))
   cat("case_number_details.survey <- svydesign(ids = ~ section1.location.district ,  data = case_number_details ,  weights = ~Normalized.Weight ,  fpc = ~fpc )", file=chapter.name , sep="\n", append=TRUE)
   cat("individual_biodata.survey <- svydesign(ids = ~ section1.location.district ,  data = individual_biodata ,  weights = ~Normalized.Weight ,  fpc = ~fpc )", file=chapter.name , sep="\n", append=TRUE)
 
+
+  ### Selection of variable for analyisis of association - chisquarred
+  selectvariable <- dico[dico$type %in% c("select_multiple_d","select_one") & !(is.na(dico$correlate)), c("chapter", "name", "label", "type", "qrepeatlabel", "fullname","disaggregation")]
+
+
   cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
 
 
@@ -108,7 +118,7 @@ for(i in 1:nrow(chapters))
 
   for(j in 1:nrow(chapterquestions))
   {
-   #j <-5
+   #j <-18
   ## Now getting level for each questions
   questions.name <- as.character(chapterquestions[ j , c("fullname")])
   questions.shortname <- as.character(chapterquestions[ j , c("name")])
@@ -213,6 +223,99 @@ for(i in 1:nrow(chapters))
 
     ##selectone.rel#######################################################################
     cat(paste("### Analysis of relationship" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
+
+
+    ##selectone.corre#######################################################################
+    ### We can test all correlation before and keep in the report only the multiple plots
+
+    ## First check that variables are in the frame
+    selectvariable1 <- selectvariable[selectvariable$qrepeatlabel %in% questions.frame, ]
+    check <- as.data.frame(names(get(paste0(questions.frame))))
+    names(check)[1] <- "fullname"
+    check$id <- row.names(check)
+    selectdf <- join(x=selectvariable1, y=check, by="fullname",  type="left")
+    selectdf <- selectdf[!is.na(selectdf$id), ]
+
+    rm(chiquare.resultall)
+    chiquare.resultall <- data.frame(c(1))
+    names(chiquare.resultall)[1] <- "id"
+    chiquare.resultall$target <- "target"
+    chiquare.resultall$tested <- "result"
+    chiquare.resultall$frame <- "frame"
+    chiquare.resultall$target.n <- 1
+    chiquare.resultall$tested.n <- 2
+    chiquare.resultall$target.label <- "target.label"
+    chiquare.resultall$tested.label <- "tested.label"
+    chiquare.resultall$p.value <- 0.999
+
+    for (l in 1:nrow(selectdf) ) {
+      # l <- 18
+      chiquare.result <- data.frame(c(1))
+      names(chiquare.result)[1] <- "id"
+      chiquare.result$id <- l
+      chiquare.result[1, c("target")] <- questions.name
+      chiquare.result[1, c("tested")] <-  as.character(selectdf[l, c("fullname")])
+      chiquare.result[1, c("frame")]  <- questions.frame
+      ## getting labels
+      chiquare.result[1, c("target.n")] <-   which(colnames(get(paste0(chiquare.result$frame)))== chiquare.result[1, c("target")])
+      chiquare.result[1, c("tested.n")] <-   which(colnames(get(paste0(chiquare.result$frame)))== chiquare.result[1, c("tested")])
+      chiquare.result[1, c("target.label")]  <- attributes(get(paste0(chiquare.result$frame)))$variable.labels[chiquare.result[1, c("target.n")]]
+      chiquare.result[1, c("tested.label")]  <- attributes(get(paste0(chiquare.result$frame)))$variable.labels[chiquare.result[1, c("tested.n")]]
+
+      cat(paste0(l," correlation between --",chiquare.result[1, c("target.label")],"-- and --",chiquare.result[1, c("tested.label")],"--.\n"))
+      formula <- cbind(as.data.frame(get(paste0(chiquare.result$frame))[[chiquare.result$target]]), as.data.frame(get(paste0(chiquare.result$frame))[[chiquare.result$tested]]))
+      names(formula)[1] <- "target"
+      names(formula)[2] <- "tested"
+      formula<-formula[!(is.na(formula$target)),]
+      formula<-formula[!(is.na(formula$tested)),]
+      ### Testing number of levels for the 2 variables as 'x' and 'y' must have at least 2 levels
+      if ( (chiquare.result[1, c("target")]!=chiquare.result[1, c("tested")] ) &
+           (nlevels(as.factor(as.character(formula$target))) >1 ) &
+           (nlevels(as.factor(as.character(formula$tested))) >1 ) &
+           (nlevels(as.factor(as.character(formula$target))) < 8 ) &
+           (nlevels(as.factor(as.character(formula$tested))) < 8 ) )
+        { chiquare.result[1, c("p.value")]  <- round(chisq.test(formula$target,formula$tested)$p.value,4)
+        } else { chiquare.result[1, c("p.value")] <- 1  }
+
+      chiquare.resultall <- rbind(chiquare.resultall, chiquare.result)
+      rm(chiquare.result)
+    }
+
+    ## Subsetting results on test where pvvalue is below 0.05
+    chiquare.true <- chiquare.resultall[ chiquare.resultall$p.value <= 0.05, ]
+
+    ### Case there not any positive test
+
+    if (nrow(chiquare.true)==0){
+      cat(paste0("cat(\"No significative association found for this question...\")"),file=chapter.name , sep="\n", append=TRUE)
+      } else {
+    ## now generating correlation plot for each of the dependent.
+    for (m in 1:nrow(chiquare.true)) {
+      frame<- as.character(chiquare.true[m,4 ])
+      target <- as.character(chiquare.true[m,2 ])
+      tested <- as.character(chiquare.true[m,3 ])
+      target.label <- as.character(chiquare.true[m,7])
+      tested.label <- as.character(chiquare.true[m,8 ])
+
+      formula.target    <-get(paste0(frame))[[target]]
+      formula.tested    <-get(paste0(frame))[[tested]]
+
+      formula.target1    <-paste0(frame, "$", target)
+      formula.tested1    <-paste0(frame, "$", tested)
+
+    ## Open chunk
+    cat(paste0("\n```{r ", questions.name,"ccc",m, ".rel, echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, message=FALSE, comment = \"\", fig.height=6, size=\"small\"}\n"), file=chapter.name, append=TRUE)
+
+    cat(paste0("corrplot(chisq.test(",formula.target1,",", formula.tested1,")$residuals, is.cor = FALSE,"), file=chapter.name , sep="\n", append=TRUE)
+    cat(paste0("cl.pos=\"n\", ## Do not display the color legend"), file=chapter.name , sep="\n", append=TRUE)
+    cat(paste0("tl.cex = 0.7, ## Size of axis label"), file=chapter.name , sep="\n", append=TRUE)
+    cat(paste0("mar=c(1,1,4,1), ## margin of plots"), file=chapter.name , sep="\n", append=TRUE)
+    cat(paste0("title= paste0(\"Correlation between ", "\n",target.label,"\n", " & ",tested.label,"\")) "), file=chapter.name , sep="\n", append=TRUE)
+    ## Close chunk
+    cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
+    }
+      }
+    ##selectone.crosstab#######################################################################
     if (nrow(frequ) %in% c("0","1")){
       cat(paste0("cat(\"No responses recorded for this question...\")"),file=chapter.name , sep="\n", append=TRUE)
       cat("No responses recorded for this question...\n")
