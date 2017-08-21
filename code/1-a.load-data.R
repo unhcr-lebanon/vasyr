@@ -13,7 +13,7 @@
 mainDir <- getwd()
 ## Load all required packages
 source(paste0(mainDir,"/code/0-packages.R"))
-library(koboloadeR)
+#library(koboloadeR)
 
 ##############################################
 ## Load form
