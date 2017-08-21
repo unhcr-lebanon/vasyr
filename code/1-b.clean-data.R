@@ -50,7 +50,7 @@ household.nolocation <- household[ is.na(household$lat), c("section1.location.di
 write.csv(household.nolocation, "data/location-to-be-checked.csv")
 
 ### Dataset with
-household <- household[ !(is.na(household$lat)), ]
+#household <- household[ !(is.na(household$lat)), ]
 
 #source("code/Chek-with-maps.R")
 
@@ -70,6 +70,34 @@ Correct.form <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "f
 # "formid"       "organization"
 #names(Correct.form)
 # "formid"   "district"
+
+### Remove FormIDs to be dropped 
+# 1 - duplicate visits to be dropped from cleaning file AND further FormIDs also not in WFP final dataset
+# 2 - duplicate visits to be dropped from cleaning file
+
+Correct.duplicate <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "dublicate_visit_to_Del")
+Correct.duplicate.2 <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "dublicate_visit_to_Delx")
+
+household <- merge(x=household, y=Correct.duplicate, by="KEY", all.x=TRUE)
+household <- household[ (is.na(household$to_delete)), ]
+
+household.2 <- merge(x=household.back, y=Correct.duplicate.2, by="KEY", all.x=TRUE)
+household.2 <- household.2[ (is.na(household.2$to_delete)), ]
+
+case_number_details.back <- case_number_details
+individual_biodata.back <- individual_biodata
+
+individual_biodata <- merge(x=individual_biodata, y=Correct.duplicate, by="KEY", all.x=TRUE)
+individual_biodata <- individual_biodata[ (is.na(individual_biodata$to_delete)), ]
+
+individual_biodata.2 <- merge(x=individual_biodata.back, y=Correct.duplicate.2, by="KEY", all.x=TRUE)
+individual_biodata.2 <- individual_biodata.2[ (is.na(individual_biodata.2$to_delete)), ]
+
+case_number_details <- merge(x=case_number_details, y=Correct.duplicate, by="KEY", all.x=TRUE)
+case_number_details <- case_number_details[ (is.na(case_number_details$to_delete)), ]
+
+case_number_details.2 <- merge(x=case_number_details.back, y=Correct.duplicate.2, by="KEY", all.x=TRUE)
+case_number_details.2 <- case_number_details.2[ (is.na(case_number_details.2$to_delete)), ]
 
 
 
@@ -116,6 +144,7 @@ individual_biodata <- individual_biodata[ !(is.na(individual_biodata$section1.lo
 ## Now testing weighting using the survey library
 #library(survey)
 
+## Survey design follows one-stage modality due to sampling with population proportional to size in the first stage
 #household.survey <- svydesign(ids = ~ section1.location.district ,  data = household2 ,  weights = ~Normalized.Weight ,  fpc = ~fpc )
 #summary(household.survey)
 #svymean(~ section3_household.housing.type_of_housing, design = household.survey)
