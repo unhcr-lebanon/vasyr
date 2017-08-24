@@ -405,15 +405,21 @@ for(i in 1:nrow(chapters))
   } else if (questions.type =="decimal" | questions.type =="integer" ) {
     cat(paste("Numeric question  in data frame: ",questions.frame  ,"\n\n",sep=""),file=chapter.name ,sep="\n",append=TRUE)
 
+    ## Check the lenght of the table to see if we can display it or not...
+    frequ <- as.data.frame(table( get(paste0(questions.frame))[[questions.name]]))
+
     ####Decimal.tabulation########################################################################
     cat(paste("### Tabulation\n" ,sep=""),file=chapter.name ,sep="\n",append=TRUE)
 
     ## Open chunk
     cat(paste0("```{r ", questions.name, ".tab, echo=FALSE, warning=FALSE, cache=FALSE, tidy = TRUE, message=FALSE, comment = \"\", fig.height=4, size=\"small\"}\n", sep = '\n'), file=chapter.name, append=TRUE)
     cat(paste0("frequ <- as.data.frame(table(",questions.variable,"))"),file=chapter.name ,sep="\n",append=TRUE)
-    ## Check the lenght of the table to see if we can display it or not...
-    frequ <- as.data.frame(table( get(paste0(questions.frame))[[questions.name]]))
-    if (nrow(frequ) > 10){
+
+    ### Check if we have records or if we have too many records
+    if (nrow(frequ) %in% c("0","1")){
+      cat(paste0("cat(\"No responses recorded for this question...\")"),file=chapter.name , sep="\n", append=TRUE)
+      cat("No responses recorded for this question...\n")
+    } else if (nrow(frequ) > 10){
       cat(paste0("cat(\"There's too many potential values to display. We will only show the histogram. \n \")"),file=chapter.name ,sep="\n", append=TRUE)
     } else{
     cat(paste0("## display table"),file=chapter.name ,sep="\n",append=TRUE)
