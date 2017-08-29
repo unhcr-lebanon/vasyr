@@ -73,38 +73,27 @@ Correct.form <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "f
 # "formid"   "district"
 
 ### Remove FormIDs to be dropped
-# 1 - duplicate visits to be dropped from cleaning file AND further FormIDs also not in WFP final dataset
-# 2 - duplicate visits to be dropped from cleaning file
+# Duplicate visits to be dropped from cleaning file AND further FormIDs also not in WFP final dataset
 
-Correct.duplicate <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "dublicate_visit_to_Del")
-Correct.duplicate.2 <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "dublicate_visit_to_Delx")
-
-
-#### Now apply the error log
-
-#household <- merge(x=household, y=Correct.duplicate, by="KEY", all.x=TRUE)
-#household <- household[ (is.na(household$to_delete)), ]
-
-household <- merge(x=household, y=Correct.duplicate.2, by="KEY", all.x=TRUE)
+drop.form <- read_excel("data/erorr_and_correction_tables.xlsx", sheet = "duplicate_visit_drop")
+household <- merge(x=household, y=drop.form, by="KEY", all.x=TRUE)
 household <- household[ (is.na(household$to_delete)), ]
 
-#case_number_details.back <- case_number_details
-#individual_biodata.back <- individual_biodata
+individual_biodata.back <- individual_biodata
 
-#individual_biodata <- merge(x=individual_biodata, y=Correct.duplicate, by="KEY", all.x=TRUE)
-#individual_biodata <- individual_biodata[ (is.na(individual_biodata$to_delete)), ]
+cross.check <- read_excel("data/erorr_and_correction_tables.xlsx", sheet = "dublicate_visit_to_Delx")
+individual_biodata <- merge(x=individual_biodata, y=cross.check, by="KEY", all.x=TRUE)
+individual_biodata <- individual_biodata[ (is.na(individual_biodata$further_delete)), ]
 
-individual_biodata <- merge(x=individual_biodata, y=Correct.duplicate.2, by="KEY", all.x=TRUE)
+individual_biodata.drop <- read_excel("data/erorr_and_correction_tables.xlsx", sheet = "dublicate_visit_to_Del")
+individual_biodata.drop$unique <- paste(individual_biodata.drop$KEY, individual_biodata.drop$section2.case_number_details.casenumber.unhcr_number_bis)
+individual_biodata$unique <- paste(individual_biodata$KEY, individual_biodata$section2.case_number_details.casenumber.unhcr_number_bis)
+individual_biodata <- merge(x=individual_biodata, y=individual_biodata.drop, by="unique", all.x=TRUE)
 individual_biodata <- individual_biodata[ (is.na(individual_biodata$to_delete)), ]
 
-#case_number_details <- merge(x=case_number_details, y=Correct.duplicate, by="KEY", all.x=TRUE)
-#case_number_details <- case_number_details[ (is.na(case_number_details$to_delete)), ]
+rm(individual_biodata.drop)
+rm(cross.check)
 
-case_number_details <- merge(x=case_number_details, y=Correct.duplicate.2, by="KEY", all.x=TRUE)
-case_number_details <- case_number_details[ (is.na(case_number_details$to_delete)), ]
-
-## Clean a bit
-rm(Correct.CaseNo, Correct.District , Correct.Org , Correct.form, Correct.duplicate.2, Correct.duplicate)
 
 ################################################################
 #### Weighting data
