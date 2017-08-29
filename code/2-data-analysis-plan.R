@@ -1,15 +1,91 @@
 #################################################################################
 #### Load data analysis plan
 library(readxl)
-analysis.plan <- read_excel("data/vaSyr-Analysis-Plan.xls", sheet = "analysis-plan")
+indicator <- read_excel("data/form.xls", sheet = "indicator")
 
-## load indicator name
+## create the dicotemp
+#names(dico)
+dicotemp$type <- "trigger"
+dicotemp$name <- "trigger"
+dicotemp$fullname <- "trigger"
+dicotemp$label <- "trigger"
+dicotemp$chapter <- "trigger"
+dicotemp$disaggregation <- "trigger"
+dicotemp$correlate <- "trigger"
+dicotemp$sensitive <- "trigger"
+dicotemp$anonymise <- "trigger"
+dicotemp$listname <- "trigger"
+dicotemp$qrepeat <- "trigger"
+dicotemp$qrepeatlabel <- "trigger"
+dicotemp$qlevel <- "trigger"
+dicotemp$qgroup <- "trigger"
+dicotemp$labelchoice <- "trigger"
+dicotemp$repeatsummarize <- "trigger"
+dicotemp$variable <- "trigger"
+dicotemp$order <- "trigger"
+dicotemp$weight <- "trigger"
+dicotemp$score <- "trigger"
+dicotemp$recategorise <- "trigger"
+dicotemp$formpart <- "trigger"
+dicotemp$indic <- "feature"
 
-## buidl formula and apply it to indicator
 
-## build a subtable to get indicator breakdown options
+## load indicator info
+for(i in 1:nrow(indicator))
+{
+  # i <-1
+  indicator.type	<- as.character(indicator[ i, c("type")])
+  indicator.fullname	<- as.character(indicator[ i, c("fullname")])
+  indicator.label	<- as.character(indicator[ i, c("label")])
+  indicator.chapter	<- as.character(indicator[ i, c("chapter")])
+  indicator.disaggregation	<- as.character(indicator[ i, c("disaggregation")])
+  indicator.correlate	<- as.character(indicator[ i, c("correlate")])
+  indicator.sensitive	<- as.character(indicator[ i, c("sensitive")])
+  indicator.anonymise	<- as.character(indicator[ i, c("anonymise")])
+  indicator.frame	<- as.character(indicator[ i, c("frame")])
+  indicator.listname <- as.character(indicator[ i, c("listname")])
+  indicator.calculation	<- as.character(indicator[ i, c("calculation")])
 
-## Generate graphs for each indicator options
+## Build and run the formula to insert the indicator in the right frame
+  indic.formula <- paste0(indicator.frame,"$",indicator.fullname,"<-",indicator.calculation )
+  cat(indic.formula, file="code/temp.R" , sep="\n", append=TRUE)
+  source("code/temp.R")
+  if (file.exists("code/temp.R")) file.remove("code/temp.R")
+
+## Insert the indicator in a temp dico frame to be appended to the full dico
+
+ dicotemp1$type <- indicator.type
+ dicotemp1$name <- indicator.fullname
+ dicotemp1$fullname <- indicator.fullname
+ dicotemp1$label <- indicator.label
+ dicotemp1$chapter <- indicator.chapter
+ dicotemp1$disaggregation <- indicator.disaggregation
+ dicotemp1$correlate <- indicator.correlate
+ dicotemp1$sensitive <- indicator.sensitive
+ dicotemp1$anonymise <- indicator.anonymise
+ dicotemp1$listname <- indicator.listname
+ dicotemp1$qrepeat <- " "
+ dicotemp1$qrepeatlabel <- indicator.frame
+ dicotemp1$qlevel <- " "
+ dicotemp1$qgroup <- " "
+ dicotemp1$labelchoice <- " "
+ dicotemp1$repeatsummarize <- " "
+ dicotemp1$variable <- " "
+ dicotemp1$order <- " "
+ dicotemp1$weight <- " "
+ dicotemp1$score <- " "
+ dicotemp1$recategorise <- " "
+ dicotemp1$formpart <- " "
+ dicotemp1$indic <- "feature"
+
+ dicotemp <- rbind(dicotemp,dicotemp1)
+
+}
+## append indicators in the dico
+
+ dico$indic <- "data"
+ dico <- rbind(dico,dicotemp)
+
 
 
 
