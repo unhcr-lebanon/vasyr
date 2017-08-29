@@ -5,7 +5,9 @@ indicator <- read_excel("data/form.xls", sheet = "indicator")
 
 ## create the dicotemp
 #names(dico)
-dicotemp$type <- "trigger"
+dicotemp <- data.frame(c("trigger"))
+names(dicotemp)[1] <- "type"
+#dicotemp$type <- "trigger"
 dicotemp$name <- "trigger"
 dicotemp$fullname <- "trigger"
 dicotemp$label <- "trigger"
@@ -54,6 +56,8 @@ for(i in 1:nrow(indicator))
 
 ## Insert the indicator in a temp dico frame to be appended to the full dico
 
+ dicotemp1 <- data.frame(c("trigger"))
+ names(dicotemp1)[1] <- "type"
  dicotemp1$type <- indicator.type
  dicotemp1$name <- indicator.fullname
  dicotemp1$fullname <- indicator.fullname
