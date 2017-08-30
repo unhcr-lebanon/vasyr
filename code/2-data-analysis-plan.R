@@ -7,6 +7,7 @@ library(koboloadeR)
 form <- "form.xls"
 dico <- read.csv(paste0(mainDir,"/data/dico_",form,".csv"), encoding="UTF-8", na.strings="")
 household <- read.csv(paste0(mainDir,"/data/household.csv"), encoding="UTF-8", na.strings="NA")
+household.back <- household
 case_number_details <- read.csv(paste0(mainDir,"/data/case_number_details.csv"), encoding="UTF-8", na.strings="NA")
 individual_biodata <- read.csv(paste0(mainDir,"/data/individual_biodata.csv"), encoding="UTF-8", na.strings="NA")
 
@@ -107,7 +108,11 @@ for(i in 1:nrow(indicator))
  dicotemp <- dicotemp[ 2:nrow(dicotemp), ]
  dico <- rbind(dico,dicotemp)
 
+### check indicator type
+household.check <- household[ , ((ncol(household.back)+1):ncol(household))]
+summary(household.check)
 
-
-
-
+## Check that the join is correct by looking at total HH members
+household$mf <- household$F +household$M
+household$adultchild <- household$adult  +household$child
+View(household[ , c("section2.total_hh", "mf", "adultchild")])
