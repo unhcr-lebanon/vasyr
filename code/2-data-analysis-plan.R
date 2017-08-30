@@ -1,9 +1,17 @@
-#################################################################################
-#### Load data analysis plan
-library(readxl)
-indicator <- read_excel("data/form.xls", sheet = "indicator")
+mainDir <- getwd()
+## Load all required packages
+source(paste0(mainDir,"/code/0-packages.R"))
+library(koboloadeR)
 
-## create the dicotemp
+## Load data & dico #############################################################################
+form <- "form.xls"
+dico <- read.csv(paste0(mainDir,"/data/dico_",form,".csv"), encoding="UTF-8", na.strings="")
+household <- read.csv(paste0(mainDir,"/data/household.csv"), encoding="UTF-8", na.strings="NA")
+case_number_details <- read.csv(paste0(mainDir,"/data/case_number_details.csv"), encoding="UTF-8", na.strings="NA")
+individual_biodata <- read.csv(paste0(mainDir,"/data/individual_biodata.csv"), encoding="UTF-8", na.strings="NA")
+
+
+## Create the dicotemp #############################################################################
 #names(dico)
 dicotemp <- data.frame(c("trigger"))
 names(dicotemp)[1] <- "type"
@@ -31,11 +39,16 @@ dicotemp$recategorise <- "trigger"
 dicotemp$formpart <- "trigger"
 dicotemp$indic <- "feature"
 
+####Load data analysis plan#############################################################################
+library(readxl)
+indicator <- read_excel("data/form.xls", sheet = "indicator")
 
-## load indicator info
+
+## Load indicator info #############################################################################
+
 for(i in 1:nrow(indicator))
 {
-  # i <-1
+  # i <-5
   indicator.type	<- as.character(indicator[ i, c("type")])
   indicator.fullname	<- as.character(indicator[ i, c("fullname")])
   indicator.label	<- as.character(indicator[ i, c("label")])
@@ -47,14 +60,16 @@ for(i in 1:nrow(indicator))
   indicator.frame	<- as.character(indicator[ i, c("frame")])
   indicator.listname <- as.character(indicator[ i, c("listname")])
   indicator.calculation	<- as.character(indicator[ i, c("calculation")])
+  cat(paste0(i, "- Load  indicator: ", indicator.label,"\n"))
 
-## Build and run the formula to insert the indicator in the right frame
+## Build and run the formula to insert the indicator in the right frame  ###########################
   indic.formula <- paste0(indicator.frame,"$",indicator.fullname,"<-",indicator.calculation )
+  if (file.exists("code/temp.R")) file.remove("code/temp.R")
   cat(indic.formula, file="code/temp.R" , sep="\n", append=TRUE)
   source("code/temp.R")
   if (file.exists("code/temp.R")) file.remove("code/temp.R")
 
-## Insert the indicator in a temp dico frame to be appended to the full dico
+## Insert the indicator in a temp dico frame to be appended to the full dico  ######################
 
  dicotemp1 <- data.frame(c("trigger"))
  names(dicotemp1)[1] <- "type"
@@ -85,9 +100,11 @@ for(i in 1:nrow(indicator))
  dicotemp <- rbind(dicotemp,dicotemp1)
 
 }
-## append indicators in the dico
+## Append indicators in the dico  #############################################################################
 
  dico$indic <- "data"
+ ## removing first line
+ dicotemp <- dicotemp[ 2:nrow(dicotemp), ]
  dico <- rbind(dico,dicotemp)
 
 
