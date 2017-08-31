@@ -12,6 +12,43 @@ source("code/1-a.load-data.R")
 individual_biodata$section2.case_number_details.case_number_individuals.individual_biodata.age <- round(individual_biodata$section2.case_number_details.case_number_individuals.individual_biodata.age/365, digits = 0)
 #table(individual_biodata$section2.case_number_details.case_number_individuals.individual_biodata.age)
 
+
+## Pb with wrong age of household date --
+
+#test <- as.data.frame(household$section1.identify_interviewee.dob_HHHead)
+#test <- as.data.frame(household[ 1:15, c("section1.identify_interviewee.dob_HHHead")])
+#test$formated <-  as.Date(test$section1.identify_interviewee.dob_HHHead, format("%d-%b-%y"))
+#test$corrected <- Sys.Date()
+#for (i in 1:nrow(test))
+#{
+  # i <-1
+#  if(test[i, c("formated")] > Sys.Date() )
+#  { test[i, c("corrected")] <- as.Date((test[i, c("formated")] - 36525), format("%d-%b-%y"))
+#  } else { test[i, c("corrected")] <- as.Date(test[i, c("formated")], format("%d-%b-%y")) }
+#}
+household$section1.identify_interviewee.dob_HHHeadold1 <- household$section1.identify_interviewee.dob_HHHead
+household$section1.identify_interviewee.dob_HHHeadold <- as.Date(household$section1.identify_interviewee.dob_HHHead, format("%d-%b-%y"))
+household$section1.identify_interviewee.dob_HHHead <- Sys.Date()
+
+View(household[638:642, c("section1.identify_interviewee.dob_HHHead")])
+View(household[638:642, c("section1.identify_interviewee.dob_HHHeadold")])
+
+## How many NA
+how.many.na <- household[is.na(household$section1.identify_interviewee.dob_HHHeadold), ]
+#str(household[i, c("section1.identify_interviewee.dob_HHHeadold")]- 36525)
+# i <-639
+
+for (i in 1:nrow(household))
+  {
+  cat(paste0(i,"\n"))
+  if(is.na(household[i, c("section1.identify_interviewee.dob_HHHeadold")]) )
+        { household[i, c("section1.identify_interviewee.dob_HHHead")] <- "1900-01-01"
+  } else if(household[i, c("section1.identify_interviewee.dob_HHHeadold")] > Sys.Date() )
+        { household[i, c("section1.identify_interviewee.dob_HHHead")] <- household[ i, c("section1.identify_interviewee.dob_HHHeadold")]- 36525
+        } else { household[i, c("section1.identify_interviewee.dob_HHHead")] <- household[ i, c("section1.identify_interviewee.dob_HHHeadold")] }
+  }
+
+
 ################################################################
 #### Check location - fill with GPS when not available based on P-code
 

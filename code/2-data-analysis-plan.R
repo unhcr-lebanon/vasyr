@@ -108,11 +108,25 @@ for(i in 1:nrow(indicator))
  dicotemp <- dicotemp[ 2:nrow(dicotemp), ]
  dico <- rbind(dico,dicotemp)
 
+ rm(dicotemp,dicotemp1)
+
 ### check indicator type
-household.check <- household[ , ((ncol(household.back)+1):ncol(household))]
-summary(household.check)
+#household.check <- household[ , ((ncol(household.back)+1):ncol(household))]
+#summary(household.check)
+## label Variables
+household.check <- kobo_label(household.check , dico)
 
 ## Check that the join is correct by looking at total HH members
-household$mf <- household$F +household$M
-household$adultchild <- household$adult  +household$child
-View(household[ , c("section2.total_hh", "mf", "adultchild")])
+#household$mf <- household$F +household$M
+#household$adultchild <- household$adult  +household$child
+#View(household[ , c("section2.total_hh", "mf", "adultchild")])
+
+## label Variables
+household <- kobo_label(household , dico)
+
+cat("\n\nWrite backup\n")
+
+write.csv(household, "data/household2.csv")
+write.csv(case_number_details, "data/case_number_details2.csv")
+write.csv(individual_biodata , "data/individual_biodata2.csv")
+
