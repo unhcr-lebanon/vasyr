@@ -1,12 +1,10 @@
-#######################################
+
 ### Clean and weight data         ####
-#######################################
 
 source("code/1-a.load-data.R")
 
 
-################################################################
-#### Change age from day to years - rounded to the year..
+#### Change age from day to years - rounded to the year..####################
 
 #names(individual_biodata)
 individual_biodata$section2.case_number_details.case_number_individuals.individual_biodata.age <- round(individual_biodata$section2.case_number_details.case_number_individuals.individual_biodata.age/365, digits = 0)
@@ -30,27 +28,27 @@ household$section1.identify_interviewee.dob_HHHeadold1 <- household$section1.ide
 household$section1.identify_interviewee.dob_HHHeadold <- as.Date(household$section1.identify_interviewee.dob_HHHead, format("%d-%b-%y"))
 household$section1.identify_interviewee.dob_HHHead <- Sys.Date()
 
-View(household[638:642, c("section1.identify_interviewee.dob_HHHead")])
-View(household[638:642, c("section1.identify_interviewee.dob_HHHeadold")])
+#View(household[638:642, c("section1.identify_interviewee.dob_HHHead")])
+#View(household[638:642, c("section1.identify_interviewee.dob_HHHeadold")])
 
 ## How many NA
 how.many.na <- household[is.na(household$section1.identify_interviewee.dob_HHHeadold), ]
+rm(how.many.na)
 #str(household[i, c("section1.identify_interviewee.dob_HHHeadold")]- 36525)
 # i <-639
 
 for (i in 1:nrow(household))
   {
-  cat(paste0(i,"\n"))
-  if(is.na(household[i, c("section1.identify_interviewee.dob_HHHeadold")]) )
-        { household[i, c("section1.identify_interviewee.dob_HHHead")] <- "1900-01-01"
-  } else if(household[i, c("section1.identify_interviewee.dob_HHHeadold")] > Sys.Date() )
-        { household[i, c("section1.identify_interviewee.dob_HHHead")] <- household[ i, c("section1.identify_interviewee.dob_HHHeadold")]- 36525
-        } else { household[i, c("section1.identify_interviewee.dob_HHHead")] <- household[ i, c("section1.identify_interviewee.dob_HHHeadold")] }
+  #cat(paste0(i,"\n"))
+  if( is.na (household[ i, c("section1.identify_interviewee.dob_HHHeadold") ] ) )
+        { household[ i, c("section1.identify_interviewee.dob_HHHead") ] <- "1900-01-01"
+  } else if( household[ i, c("section1.identify_interviewee.dob_HHHeadold") ] > Sys.Date() )
+        { household[ i, c("section1.identify_interviewee.dob_HHHead") ] <- household[ i, c("section1.identify_interviewee.dob_HHHeadold")] - 36525
+        } else { household[ i, c("section1.identify_interviewee.dob_HHHead") ] <- household[ i, c("section1.identify_interviewee.dob_HHHeadold")] }
   }
 
 
-################################################################
-#### Check location - fill with GPS when not available based on P-code
+#### Check location - fill with GPS when not available based on P-code##########
 
 location <- read.csv("data/location.csv")
 names(location)[1] <- "section1.location.pcode"
@@ -92,28 +90,92 @@ write.csv(household.nolocation, "data/location-to-be-checked.csv")
 
 #source("code/Chek-with-maps.R")
 
-################################################################
-#### Tables with clean log
+
+#### Tables with clean log #######################################
+
+### First look at records that needs to be updated#########################
+#names(household)
+# names(case_number_details)
 library(readxl)
 Correct.CaseNo <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "Vasyr2017_CaseNo_Correction")
-Correct.District <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "Vasyr2017_District_Correction")
-Correct.Org <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "Vasyr2017_Org_Correction")
-Correct.form <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "formid_and_correct_district")
-
 #names(Correct.CaseNo)
-#  "formid"           "incorrect_caseno" "correct_caseno"
-#names(Correct.District)
-# "caseno"           "district"         "actual_cadaster"  "assigned_cluster" "Order of Cases"   "ODK District"     "Formid"           "Same District"
+#  "formid",  "incorrect_caseno" "correct_caseno"
+Correct.CaseNo <- Correct.CaseNo[ , c("formid", "correct_caseno") ]
+names(Correct.CaseNo)[1] <- "KEY"
+case_number_details <- merge(x = case_number_details, y = Correct.CaseNo, by = "KEY", all.x = TRUE)
+for (i in 1:nrow(household))
+{
+  #cat(paste0(i,"\n"))
+  if( !(is.na (case_number_details[ i, c("correct_caseno") ]) ) )
+  { case_number_details[ i, c("section2.case_number_details.casenumber.unhcr_case_number") ] <- case_number_details[ i, c("correct_caseno") ] } else {}
+}
+
+
+Correct.Org <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "Vasyr2017_Org_Correction")
 #names(Correct.Org)
 # "formid"       "organization"
+Correct.Org <- Correct.Org [ , c("formid", "organization") ]
+names(Correct.Org)[1] <- "KEY"
+household <- merge(x = household, y = Correct.Org , by = "KEY", all.x = TRUE)
+for (i in 1:nrow(household))
+{
+  #cat(paste0(i,"\n"))
+  if( !(is.na (household[ i, c("organization") ]) ) )
+  { household[ i, c("enumerator_details.organization") ] <- household[ i, c("organization") ] } else {}
+}
+
+
+
+Correct.cluster <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "Vasyr2017_District_Correction")
+#names(Correct.District)
+# "caseno", "district",  "actual_cadaster", "assigned_cluster", "Order of Cases", "ODK District", "Formid" ,  "Same District"
+Correct.cluster <- Correct.cluster[ , c("Formid", "assigned_cluster") ]
+names(Correct.cluster)[1] <- "KEY"
+household <- merge(x = household, y = Correct.cluster, by = "KEY", all.x = TRUE)
+
+for (i in 1:nrow(household))
+{
+  #cat(paste0(i,"\n"))
+  if( !(is.na (household[ i, c("assigned_cluster") ]) ) )
+  { household[ i, c("section1.location.cluster_number") ] <- household[ i, c("assigned_cluster") ] } else {}
+}
+
+
+Correct.district <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "formid_and_correct_district")
 #names(Correct.form)
 # "formid"   "district"
+Correct.district <- Correct.district[ , c("formid", "district") ]
+names(Correct.district)[1] <- "KEY"
+household <- merge(x = household, y = Correct.district, by = "KEY", all.x = TRUE)
+for (i in 1:nrow(household))
+{
+  #cat(paste0(i,"\n"))
+  if( !(is.na (household[ i, c("organization") ]) ) )
+  { household[ i, c("section1.location.district") ] <- household[ i, c("district") ] } else {}
+}
 
-### Remove FormIDs to be dropped
+
+Correct.Cluster2 <- read_excel("data/Cluster_reassignment_missing_script.xlsx", sheet = "table")
+#names(Correct.Cluster2)
+#"formid",    "district" ,   "cluster_number" , "org_district",  "org_cluster" ,   "unhcr_case_number"
+# "location_name" ,  "origin_or_replacement", "Assigned_District",    "Assigned_Cluster"
+Correct.Cluster2 <- Correct.Cluster2[ , c("formid", "Assigned_District", "Assigned_Cluster") ]
+names(Correct.Cluster2)[1] <- "KEY"
+household <- merge(x = household, y = Correct.Cluster2, by = "KEY", all.x = TRUE)
+for (i in 1:nrow(household))
+{
+  #cat(paste0(i,"\n"))
+  if( !(is.na (household[ i, c("organization") ]) ) )
+  { household[ i, c("section1.location.district") ] <- household[ i, c("Assigned_District") ]
+    household[ i, c("section1.location.cluster_number") ] <- household[ i, c("Assigned_Cluster") ] } else {}
+}
+
+
+### Now Remove FormIDs to be dropped #######################
 # Duplicate visits to be dropped from cleaning file AND further FormIDs also not in WFP final dataset
 
 drop.form <- read_excel("data/erorr_and_correction_tables.xlsx", sheet = "duplicate_visit_drop")
-household <- merge(x=household, y=drop.form, by="KEY", all.x=TRUE)
+household <- merge(x = household, y = drop.form, by = "KEY", all.x = TRUE)
 household <- household[ (is.na(household$to_delete)), ]
 
 individual_biodata.back <- individual_biodata
@@ -150,8 +212,11 @@ moved_returnee <- moved_returnee[ (is.na(moved_returnee$to_delete)), ]
 #rm(cross.check)
 rm(drop.form)
 
-################################################################
-#### Weighting data
+
+
+
+
+#### Weighting data#####################################################
 
 weight <- read_excel("data/weight22_06-2017-2.xlsx",  sheet = "weight2206")
 
