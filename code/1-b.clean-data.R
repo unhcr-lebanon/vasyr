@@ -210,7 +210,7 @@ moved_returnee <- moved_returnee[ (is.na(moved_returnee$to_delete)), ]
 
 #rm(individual_biodata.drop)
 #rm(cross.check)
-rm(drop.form)
+rm(drop.form, Correct.CaseNo, Correct.cluster, Correct.Cluster2, Correct.district, Correct.Org, location, location.add)
 
 
 
@@ -255,7 +255,7 @@ household <- household[ !(is.na(household$section1.location.district)), ]
 case_number_details <- case_number_details[ !(is.na(case_number_details$section1.location.district)), ]
 individual_biodata <- individual_biodata[ !(is.na(individual_biodata$section1.location.district)), ]
 
-rm(weight2)
+rm(weight2, weight)
 
 ## Now testing weighting using the survey library
 #library(survey)
