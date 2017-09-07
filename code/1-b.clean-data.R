@@ -103,7 +103,7 @@ Correct.CaseNo <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = 
 Correct.CaseNo <- Correct.CaseNo[ , c("formid", "correct_caseno") ]
 names(Correct.CaseNo)[1] <- "KEY"
 case_number_details <- merge(x = case_number_details, y = Correct.CaseNo, by = "KEY", all.x = TRUE)
-for (i in 1:nrow(household))
+for (i in 1:nrow(case_number_details))
 {
   #cat(paste0(i,"\n"))
   if( !(is.na (case_number_details[ i, c("correct_caseno") ]) ) )
@@ -127,7 +127,7 @@ for (i in 1:nrow(household))
 
 
 Correct.cluster <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "Vasyr2017_District_Correction")
-#names(Correct.District)
+#names(Correct.cluster)
 # "caseno", "district",  "actual_cadaster", "assigned_cluster", "Order of Cases", "ODK District", "Formid" ,  "Same District"
 Correct.cluster <- Correct.cluster[ , c("Formid", "assigned_cluster") ]
 names(Correct.cluster)[1] <- "KEY"
@@ -142,23 +142,42 @@ for (i in 1:nrow(household))
 
 
 Correct.district <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "formid_and_correct_district")
-#names(Correct.form)
+#names(Correct.district)
 # "formid"   "district"
+
+## check different district naming scheme & correct
+table(household$section1.location.district)
+table(Correct.district$district)
+distr.check <- household$section1.location.district
+table(distr.check)
+
+Correct.district <- data.frame(lapply(Correct.district, function(x) {gsub("el_hermel", "El_Hermel", x)}))
+Correct.district <- data.frame(lapply(Correct.district, function(x) {gsub("west_bekaa", "West_Bekaa", x)}))
+Correct.district$district <- as.character(Correct.district$district)
+Correct.district$formid <- as.character(Correct.district$formid)
+
 Correct.district <- Correct.district[ , c("formid", "district") ]
+
 names(Correct.district)[1] <- "KEY"
 household <- merge(x = household, y = Correct.district, by = "KEY", all.x = TRUE)
 for (i in 1:nrow(household))
 {
   #cat(paste0(i,"\n"))
-  if( !(is.na (household[ i, c("organization") ]) ) )
-  { household[ i, c("section1.location.district") ] <- household[ i, c("district") ] } else {}
+  if( !(is.na (household[ i, c("district") ]) ) )
+  { household[ i, c("section1.location.district") ] <- household[ i, c("district") ] } else {""}
 }
 
-
-Correct.Cluster2 <- read_excel("data/Cluster_reassignment_missing_script.xlsx", sheet = "table")
+Correct.Cluster2 <- read_excel("data/Cluster_reassignment_missing_script.xlsx", sheet = "table", skip = 1)
 #names(Correct.Cluster2)
 #"formid",    "district" ,   "cluster_number" , "org_district",  "org_cluster" ,   "unhcr_case_number"
 # "location_name" ,  "origin_or_replacement", "Assigned_District",    "Assigned_Cluster"
+## check different district naming scheme & correct
+table(household$section1.location.district)
+table(Correct.Cluster2$Assigned_District)
+
+Correct.Cluster2$Assigned_District <- sub(" ", "_", Correct.Cluster2$Assigned_District)
+Correct.Cluster2$Assigned_District <- sub("-", "_", Correct.Cluster2$Assigned_District)
+
 Correct.Cluster2 <- Correct.Cluster2[ , c("formid", "Assigned_District", "Assigned_Cluster") ]
 names(Correct.Cluster2)[1] <- "KEY"
 household <- merge(x = household, y = Correct.Cluster2, by = "KEY", all.x = TRUE)
@@ -170,6 +189,17 @@ for (i in 1:nrow(household))
     household[ i, c("section1.location.cluster_number") ] <- household[ i, c("Assigned_Cluster") ] } else {}
 }
 
+### Backup Dataframes
+
+household.backup <- household
+individual_biodata.backup <- individual_biodata
+case_number_details.backup <- case_number_details
+
+### Restore 
+
+#household.backup -> household
+#individual_biodata.backup -> individual_biodata
+#case_number_details.backup -> case_number_details
 
 ### Now Remove FormIDs to be dropped #######################
 # Duplicate visits to be dropped from cleaning file AND further FormIDs also not in WFP final dataset
@@ -177,8 +207,6 @@ for (i in 1:nrow(household))
 drop.form <- read_excel("data/erorr_and_correction_tables.xlsx", sheet = "duplicate_visit_drop")
 household <- merge(x = household, y = drop.form, by = "KEY", all.x = TRUE)
 household <- household[ (is.na(household$to_delete)), ]
-
-individual_biodata.back <- individual_biodata
 
 individual_biodata <- merge(x=individual_biodata, y=drop.form, by="KEY", all.x=TRUE)
 individual_biodata <- individual_biodata[ (is.na(individual_biodata$to_delete)), ]
@@ -198,6 +226,16 @@ legal_residence <- legal_residence[ (is.na(legal_residence$to_delete)), ]
 moved_returnee <- merge(x=moved_returnee, y=drop.form, by="KEY", all.x=TRUE)
 moved_returnee <- moved_returnee[ (is.na(moved_returnee$to_delete)), ]
 
+### Now drop the duplicate individuals Forms
+### need to find better solution to link drop directly rather than through row number
+dup.idv <- which(individual_biodata$KEY == "uuid:919aea4a-043d-4cfb-bd32-31b3e4f58323" & individual_biodata$section2.case_number_details.case_number_individuals.individual_biodata.first_name == "Mashaan")
+dup.idv2 <- which(individual_biodata$KEY == "uuid:ac40b266-3b14-49d7-bed9-efef682bf907" & individual_biodata$section2.case_number_details.case_number_individuals.individual_biodata.first_name == "Ahmad")
+dup.idv[1]
+dup.idv2[1]
+
+individual_biodata <- individual_biodata[-dup.idv[1],]
+individual_biodata <- individual_biodata[-dup.idv2[1],]
+
 #cross.check <- read_excel("data/erorr_and_correction_tables.xlsx", sheet = "dublicate_visit_to_Delx")
 #individual_biodata <- merge(x=individual_biodata, y=cross.check, by="KEY", all.x=TRUE)
 #individual_biodata <- individual_biodata[ (is.na(individual_biodata$further_delete)), ]
@@ -210,7 +248,7 @@ moved_returnee <- moved_returnee[ (is.na(moved_returnee$to_delete)), ]
 
 #rm(individual_biodata.drop)
 #rm(cross.check)
-rm(drop.form, Correct.CaseNo, Correct.cluster, Correct.Cluster2, Correct.district, Correct.Org, location, location.add)
+rm(drop.form, Correct.CaseNo, Correct.cluster, Correct.Cluster2, Correct.district, Correct.Org, location, location.add, dup.idv, dup.idv2)
 
 
 
@@ -258,10 +296,10 @@ individual_biodata <- individual_biodata[ !(is.na(individual_biodata$section1.lo
 rm(weight2, weight)
 
 ## Now testing weighting using the survey library
-#library(survey)
+library(survey)
 
 ## Survey design follows one-stage modality due to sampling with population proportional to size in the first stage
-#household.survey <- svydesign(ids = ~ section1.location.district ,  data = household2 ,  weights = ~Normalized.Weight ,  fpc = ~fpc )
+#household.survey <- svydesign(ids = ~ section1.location.district ,  data = household ,  weights = ~Normalized.Weight ,  fpc = ~fpc )
 #summary(household.survey)
 #svymean(~ section3_household.housing.type_of_housing, design = household.survey)
 
