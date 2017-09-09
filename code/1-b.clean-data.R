@@ -602,13 +602,9 @@ rm(HH.check.clus.dist, IDV.check.clus.dist, CASE.check.clus.dist)
 #### Weighting data#####################################################
 
 weight <- read_excel("data/weight22_06-2017-2.xlsx",  sheet = "weight2206")
-#names(weight)
-#"Districts"              "Districtssp"       "Population.Individuals" "Population.HHsNS"      
-#"prop.in.sample"         "Sample.size"        "prop.in.pop"            "Design.Weight"         
-#"Normalized.Weight"
+
 ## Check the merge on location
 #location.vasyr.district <- as.data.frame(unique(household$section1.location.district))
-
 #names(location.vasyr.district)[1] <- "Districts"
 #location.vasyr.district$rowid <- row.names(location.vasyr.district)
 #location.vasyr.district <- as.data.frame(location.vasyr.district[!(is.na(location.vasyr.district$Districts )), ])
@@ -622,16 +618,12 @@ weight <- read_excel("data/weight22_06-2017-2.xlsx",  sheet = "weight2206")
 
 ## Cf https://rpubs.com/trjohns/survey-cluster
 ## calculate fpc i.e the number of clusters that should be used to build the survey object
-#fpc <- nrow(weight)
-#weight$fpc <- fpc
+fpc <- nrow(weight)
+weight$fpc <- fpc
 
 ## Good -- let's trim the weight frame
-weight2 <- weight[ c("Districts",   "Normalized.Weight","Population.HHsNS", "Sample.size")]
+weight2 <- weight[ c("Districts",   "Normalized.Weight", "fpc")]
 names(weight2)[1] <- "section1.location.district"
-names(weight2)[3] <- "fpc"
-
-fpc <- weight2$fpc
-  
 household <- join(x=household, y=weight2, by="section1.location.district")
 case_number_details <- join(x=case_number_details, y=weight2, by="section1.location.district")
 individual_biodata <- join(x=individual_biodata, y=weight2, by="section1.location.district")
@@ -670,3 +662,30 @@ library(survey)
 
 #frequ.weight$Var1 <- substr(as.character(frequ.weight$Var0), 42, nchar(frequ.weight$Var0)-42)
 #nchar(frequ.weight$Var0)
+
+############# Testing different survey objects #################################
+# survey with fpc (PSU number not right)
+#household.survey <- svydesign(ids = ~ section1.location.district ,  data = household ,  weights = ~Normalized.Weight ,  fpc = ~fpc )
+#summary(household.survey)
+#svymean(~section2.tot_above_15, household.survey)
+
+# survey without fpc (no need for fpc with PPS but are weightings enough, stratification...) 
+#household.survey.nofpc <- svydesign(ids = ~ section1.location.district ,  data = household ,  weights = ~Normalized.Weight )
+#summary(household.survey.nofpc)
+#svymean(~section2.tot_above_15, household.survey.nofpc)
+
+# survey object with cluster ids
+#household$clusterID <- paste(household$section1.location.district, household$section1.location.cluster_number)
+#How many unique?
+#uniqueIDs <- unique(household$clusterID)
+#summary(uniqueIDs)
+#uniqueIDs <- as.data.frame(uniqueIDs)
+#fpc <- nrow(uniqueIDs)
+#weight$fpc <- fpc
+
+#household$test.w <- NA
+#for (i in unique(household$clusterID)) {
+#  household$test.w[household$clusterID == i] <- 280031/(892 * sum(household$clusterID == i))}
+
+#HH.clus.survey <- svydesign(id = ~clusterID, data = household, weights = ~test.w)
+#summary(HH.clus.survey)
