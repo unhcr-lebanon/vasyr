@@ -97,6 +97,7 @@ write.csv(household.nolocation, "data/location-to-be-checked.csv")
 #names(household)
 # names(case_number_details)
 library(readxl)
+# Correct the case number for HH table based on the cleaning logs 
 Correct.CaseNo <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "Vasyr2017_CaseNo_Correction")
 #names(Correct.CaseNo)
 #  "formid",  "incorrect_caseno" "correct_caseno"
@@ -110,7 +111,7 @@ for (i in 1:nrow(case_number_details))
   { case_number_details[ i, c("section2.case_number_details.casenumber.unhcr_case_number") ] <- case_number_details[ i, c("correct_caseno") ] } else {}
 }
 
-
+# Correct the organisation for HH table based on the cleaning logs 
 Correct.Org <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "Vasyr2017_Org_Correction")
 #names(Correct.Org)
 # "formid"       "organization"
@@ -124,8 +125,7 @@ for (i in 1:nrow(household))
   { household[ i, c("enumerator_details.organization") ] <- household[ i, c("organization") ] } else {}
 }
 
-
-
+# Correct the cluster number for HH table based on the cleaning logs 
 Correct.cluster <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "Vasyr2017_District_Correction")
 #names(Correct.cluster)
 # "caseno", "district",  "actual_cadaster", "assigned_cluster", "Order of Cases", "ODK District", "Formid" ,  "Same District"
@@ -140,7 +140,7 @@ for (i in 1:nrow(household))
   { household[ i, c("section1.location.cluster_number") ] <- household[ i, c("assigned_cluster") ] } else {}
 }
 
-
+# Correct the district for HH table based on the cleaning logs 
 Correct.district <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "formid_and_correct_district")
 #names(Correct.district)
 # "formid"   "district"
@@ -148,8 +148,141 @@ Correct.district <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet 
 ## check different district naming scheme & correct
 table(household$section1.location.district)
 table(Correct.district$district)
-distr.check <- household$section1.location.district
-table(distr.check)
+#distr.check <- household$section1.location.district
+#table(distr.check)
+
+Correct.district <- data.frame(lapply(Correct.district, function(x) {gsub("el_hermel", "El_Hermel", x)}))
+Correct.district <- data.frame(lapply(Correct.district, function(x) {gsub("west_bekaa", "West_Bekaa", x)}))
+Correct.district$district <- as.character(Correct.district$district)
+Correct.district$formid <- as.character(Correct.district$formid)
+Correct.district <- Correct.district[ , c("formid", "district") ]
+names(Correct.district)[1] <- "KEY"
+household <- merge(x = household, y = Correct.district, by = "KEY", all.x = TRUE)
+
+for (i in 1:nrow(household))
+{
+  #cat(paste0(i,"\n"))
+  if( !(is.na (household[ i, c("district") ]) ) )
+  { household[ i, c("section1.location.district") ] <- household[ i, c("district") ] } else {}
+}
+
+# Correct the district for HH table based on updated cleaning script
+Correct.district <- read_excel("data/Cluster_reassignment_missing_script.xlsx", sheet = "table", skip = 1)
+#names(Correct.district)
+#"formid",    "district" ,   "cluster_number" , "org_district",  "org_cluster" ,   "unhcr_case_number"
+# "location_name" ,  "origin_or_replacement", "Assigned_District",    "Assigned_Cluster"
+
+## check different district naming scheme & correct
+table(household$section1.location.district)
+table(Correct.district$Assigned_District)
+Correct.district$Assigned_District <- sub(" ", "_", Correct.district$Assigned_District)
+Correct.district$Assigned_District <- sub("-", "_", Correct.district$Assigned_District)
+Correct.district <- Correct.district[ , c("formid", "Assigned_District") ]
+names(Correct.district)[1] <- "KEY"
+household <- merge(x = household, y = Correct.district, by = "KEY", all.x = TRUE)
+
+for (i in 1:nrow(household))
+{
+  #cat(paste0(i,"\n"))
+  if( !(is.na (household[ i, c("Assigned_District") ]) ) )
+  { household[ i, c("section1.location.district") ] <- household[ i, c("Assigned_District") ]} else {}
+}
+
+
+# Correct the district for HH table based on final cleaning provided 
+
+Correct.district.final <- read_excel("data/Vasyr_Cluster_Assignment.xlsx",   sheet = "Sheet1")
+names(Correct.district.final)
+# "formid"            "Assigned_District" "Assigned_Cluster"
+names(Correct.district.final)[1] <- "KEY"
+names(Correct.district.final)[2] <- "Assigned_District2"
+Correct.district.final <- Correct.district.final[ , c("KEY", "Assigned_District2") ]
+
+# Check naming scheme of district & correct
+table(Correct.district.final$Assigned_District2)
+table(household$section1.location.district)
+Correct.district.final$Assigned_District2 <- sub(" ", "_", Correct.district.final$Assigned_District2)
+Correct.district.final$Assigned_District2 <- sub("-", "_", Correct.district.final$Assigned_District2)
+household <- merge(x = household, y = Correct.district.final, by = "KEY", all.x = TRUE)
+
+for (i in 1:nrow(household))
+{
+  #cat(paste0(i,"\n"))
+  if( !(is.na (household[ i, c("Assigned_District2") ]) ) )
+  { household[ i, c("section1.location.district") ] <- household[ i, c("Assigned_District2") ] } else {}
+}
+
+## Correct the cluster number for HH table based on updated cleaning script
+Correct.clust.2 <- read_excel("data/Cluster_reassignment_missing_script.xlsx", sheet = "table", skip = 1)
+names(Correct.clust.2)
+#"formid",    "district" ,   "cluster_number" , "org_district",  "org_cluster" ,   "unhcr_case_number"
+# "location_name" ,  "origin_or_replacement", "Assigned_District",    "Assigned_Cluster"
+
+# check cluster numbers
+table(household$section1.location.cluster_number)
+table(Correct.clust.2$Assigned_Cluster)
+Correct.clust.2 <- Correct.clust.2[ , c("formid", "Assigned_Cluster") ]
+names(Correct.clust.2)[1] <- "KEY"
+household <- merge(x = household, y = Correct.clust.2, by = "KEY", all.x = TRUE)
+
+for (i in 1:nrow(household))
+{
+  #cat(paste0(i,"\n"))
+  if( !(is.na (household[ i, c("Assigned_Cluster") ]) ) )
+  { household[ i, c("section1.location.cluster_number") ] <- household[ i, c("Assigned_Cluster") ]} else {}
+}
+
+
+##### Correct the cluster number for HH table based on final cleaning provided #########
+
+Correct.clus.final <- read_excel("data/Vasyr_Cluster_Assignment.xlsx",   sheet = "Sheet1")
+names(Correct.clus.final)
+# "formid"            "Assigned_District" "Assigned_Cluster"
+names(Correct.clus.final)[1] <- "KEY"
+names(Correct.clus.final)[3] <- "Assigned_Cluster2"
+Correct.clus.final <- Correct.clus.final[ , c("KEY", "Assigned_Cluster2")]
+
+# Check naming scheme of district & correct
+table(Correct.clus.final$Assigned_Cluster2)
+table(household$section1.location.cluster_number)
+household <- merge(x = household, y = Correct.clus.final, by = "KEY", all.x = TRUE)
+
+for (i in 1:nrow(household))
+{
+  #cat(paste0(i,"\n"))
+  if( !(is.na (household[ i, c("Assigned_Cluster2") ]) ) )
+  { household[ i, c("section1.location.cluster_number") ] <- household[ i, c("Assigned_Cluster2") ] } else {}
+}
+
+rm(Correct.district.final, Correct.CaseNo, Correct.cluster, Correct.district, Correct.Org, location, location.add, Correct.clus.final, Correct.clust.2)
+
+
+### Cluster assignment for INDIVIDUAL dataframe from error logs
+
+Correct.cluster <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "Vasyr2017_District_Correction")
+#names(Correct.cluster)
+# "caseno", "district",  "actual_cadaster", "assigned_cluster", "Order of Cases", "ODK District", "Formid" ,  "Same District"
+Correct.cluster <- Correct.cluster[ , c("Formid", "assigned_cluster") ]
+names(Correct.cluster)[1] <- "KEY"
+individual_biodata <- merge(x = individual_biodata, y = Correct.cluster, by = "KEY", all.x = TRUE)
+
+for (i in 1:nrow(individual_biodata))
+{
+  #cat(paste0(i,"\n"))
+  if( !(is.na (individual_biodata[ i, c("assigned_cluster") ]) ) )
+  { individual_biodata[ i, c("section1.location.cluster_number") ] <- individual_biodata[ i, c("assigned_cluster") ] } else {}
+}
+
+### District adjustment for INDIVIDUAL dataframe from error logs
+Correct.district <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "formid_and_correct_district")
+#names(Correct.district)
+# "formid"   "district"
+
+## check different district naming scheme & correct
+table(individual_biodata$section1.location.district)
+table(Correct.district$district)
+#distr.check <- individual_biodata$section1.location.district
+#table(distr.check)
 
 Correct.district <- data.frame(lapply(Correct.district, function(x) {gsub("el_hermel", "El_Hermel", x)}))
 Correct.district <- data.frame(lapply(Correct.district, function(x) {gsub("west_bekaa", "West_Bekaa", x)}))
@@ -159,35 +292,243 @@ Correct.district$formid <- as.character(Correct.district$formid)
 Correct.district <- Correct.district[ , c("formid", "district") ]
 
 names(Correct.district)[1] <- "KEY"
-household <- merge(x = household, y = Correct.district, by = "KEY", all.x = TRUE)
-for (i in 1:nrow(household))
+individual_biodata <- merge(x = individual_biodata, y = Correct.district, by = "KEY", all.x = TRUE)
+for (i in 1:nrow(individual_biodata))
 {
   #cat(paste0(i,"\n"))
-  if( !(is.na (household[ i, c("district") ]) ) )
-  { household[ i, c("section1.location.district") ] <- household[ i, c("district") ] } else {""}
+  if( !(is.na (individual_biodata[ i, c("district") ]) ) )
+  { individual_biodata[ i, c("section1.location.district") ] <- individual_biodata[ i, c("district") ] } else {}
 }
 
-Correct.Cluster2 <- read_excel("data/Cluster_reassignment_missing_script.xlsx", sheet = "table", skip = 1)
-#names(Correct.Cluster2)
+# Correct the district for IDV table based on updated cleaning script
+Correct.district <- read_excel("data/Cluster_reassignment_missing_script.xlsx", sheet = "table", skip = 1)
+#names(Correct.district)
 #"formid",    "district" ,   "cluster_number" , "org_district",  "org_cluster" ,   "unhcr_case_number"
 # "location_name" ,  "origin_or_replacement", "Assigned_District",    "Assigned_Cluster"
+
 ## check different district naming scheme & correct
-table(household$section1.location.district)
-table(Correct.Cluster2$Assigned_District)
+table(individual_biodata$section1.location.district)
+table(Correct.district$Assigned_District)
+Correct.district$Assigned_District <- sub(" ", "_", Correct.district$Assigned_District)
+Correct.district$Assigned_District <- sub("-", "_", Correct.district$Assigned_District)
+Correct.district <- Correct.district[ , c("formid", "Assigned_District") ]
+names(Correct.district)[1] <- "KEY"
+individual_biodata <- merge(x = individual_biodata, y = Correct.district, by = "KEY", all.x = TRUE)
 
-Correct.Cluster2$Assigned_District <- sub(" ", "_", Correct.Cluster2$Assigned_District)
-Correct.Cluster2$Assigned_District <- sub("-", "_", Correct.Cluster2$Assigned_District)
-
-Correct.Cluster2 <- Correct.Cluster2[ , c("formid", "Assigned_District", "Assigned_Cluster") ]
-names(Correct.Cluster2)[1] <- "KEY"
-household <- merge(x = household, y = Correct.Cluster2, by = "KEY", all.x = TRUE)
-for (i in 1:nrow(household))
+for (i in 1:nrow(individual_biodata))
 {
   #cat(paste0(i,"\n"))
-  if( !(is.na (household[ i, c("organization") ]) ) )
-  { household[ i, c("section1.location.district") ] <- household[ i, c("Assigned_District") ]
-    household[ i, c("section1.location.cluster_number") ] <- household[ i, c("Assigned_Cluster") ] } else {}
+  if( !(is.na (individual_biodata[ i, c("Assigned_District") ]) ) )
+  { individual_biodata[ i, c("section1.location.district") ] <- individual_biodata[ i, c("Assigned_District") ]} else {}
 }
+
+
+# Correct the district for IDV table based on final cleaning provided 
+
+Correct.district.final <- read_excel("data/Vasyr_Cluster_Assignment.xlsx",   sheet = "Sheet1")
+names(Correct.district.final)
+# "formid"            "Assigned_District" "Assigned_Cluster"
+names(Correct.district.final)[1] <- "KEY"
+names(Correct.district.final)[2] <- "Assigned_District2"
+Correct.district.final <- Correct.district.final[ , c("KEY", "Assigned_District2") ]
+
+# Check naming scheme of district & correct
+table(Correct.district.final$Assigned_District2)
+table(individual_biodata$section1.location.district)
+Correct.district.final$Assigned_District2 <- sub(" ", "_", Correct.district.final$Assigned_District2)
+Correct.district.final$Assigned_District2 <- sub("-", "_", Correct.district.final$Assigned_District2)
+individual_biodata <- merge(x = individual_biodata, y = Correct.district.final, by = "KEY", all.x = TRUE)
+
+for (i in 1:nrow(individual_biodata))
+{
+  #cat(paste0(i,"\n"))
+  if( !(is.na (individual_biodata[ i, c("Assigned_District2") ]) ) )
+  { individual_biodata[ i, c("section1.location.district") ] <- individual_biodata[ i, c("Assigned_District2") ] } else {}
+}
+
+# Check districts ## check later after drop of forms
+write.csv(individual_biodata$section1.location.district, file = "out/district.check.csv")
+
+## Correct the cluster number for IDV table based on updated cleaning script
+Correct.clust.2 <- read_excel("data/Cluster_reassignment_missing_script.xlsx", sheet = "table", skip = 1)
+names(Correct.clust.2)
+#"formid",    "district" ,   "cluster_number" , "org_district",  "org_cluster" ,   "unhcr_case_number"
+# "location_name" ,  "origin_or_replacement", "Assigned_District",    "Assigned_Cluster"
+
+# check cluster numbers
+table(individual_biodata$section1.location.cluster_number)
+table(Correct.clust.2$Assigned_Cluster)
+Correct.clust.2 <- Correct.clust.2[ , c("formid", "Assigned_Cluster") ]
+names(Correct.clust.2)[1] <- "KEY"
+individual_biodata <- merge(x = individual_biodata, y = Correct.clust.2, by = "KEY", all.x = TRUE)
+
+for (i in 1:nrow(individual_biodata))
+{
+  #cat(paste0(i,"\n"))
+  if( !(is.na (individual_biodata[ i, c("Assigned_Cluster") ]) ) )
+  { individual_biodata[ i, c("section1.location.cluster_number") ] <- individual_biodata[ i, c("Assigned_Cluster") ]} else {}
+}
+
+
+##### Correct the cluster number for IDV table based on final cleaning provided #########
+
+Correct.clus.final <- read_excel("data/Vasyr_Cluster_Assignment.xlsx",   sheet = "Sheet1")
+names(Correct.clus.final)
+# "formid"            "Assigned_District" "Assigned_Cluster"
+names(Correct.clus.final)[1] <- "KEY"
+names(Correct.clus.final)[3] <- "Assigned_Cluster2"
+Correct.clus.final <- Correct.clus.final[ , c("KEY", "Assigned_Cluster2")]
+
+# Check naming scheme of district & correct
+table(Correct.clus.final$Assigned_Cluster2)
+table(individual_biodata$section1.location.cluster_number)
+individual_biodata <- merge(x = individual_biodata, y = Correct.clus.final, by = "KEY", all.x = TRUE)
+
+for (i in 1:nrow(individual_biodata))
+{
+  #cat(paste0(i,"\n"))
+  if( !(is.na (individual_biodata[ i, c("Assigned_Cluster2") ]) ) )
+  { individual_biodata[ i, c("section1.location.cluster_number") ] <- individual_biodata[ i, c("Assigned_Cluster2") ] } else {}
+}
+
+rm(Correct.district.final, Correct.CaseNo, Correct.cluster, Correct.district, Correct.district, Correct.Org, location, location.add, Correct.clus.final, Correct.clust.2)
+          
+### cluster assignment for CASE dataframe from cleaning logs 
+
+Correct.cluster <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "Vasyr2017_District_Correction")
+#names(Correct.cluster)
+# "caseno", "district",  "actual_cadaster", "assigned_cluster", "Order of Cases", "ODK District", "Formid" ,  "Same District"
+Correct.cluster <- Correct.cluster[ , c("Formid", "assigned_cluster") ]
+names(Correct.cluster)[1] <- "KEY"
+case_number_details <- merge(x = case_number_details, y = Correct.cluster, by = "KEY", all.x = TRUE)
+
+for (i in 1:nrow(case_number_details))
+{
+  #cat(paste0(i,"\n"))
+  if( !(is.na (case_number_details[ i, c("assigned_cluster") ]) ) )
+  { case_number_details[ i, c("section1.location.cluster_number") ] <- case_number_details[ i, c("assigned_cluster") ] } else {}
+}
+
+
+Correct.district <- read_excel("data/erorr_and_correction_tables.xlsx",   sheet = "formid_and_correct_district")
+#names(Correct.district)
+# "formid"   "district"
+
+## check different district naming scheme & correct
+table(case_number_details$section1.location.district)
+table(Correct.district$district)
+#distr.check <- case_number_details$section1.location.district
+#table(distr.check)
+
+Correct.district <- data.frame(lapply(Correct.district, function(x) {gsub("el_hermel", "El_Hermel", x)}))
+Correct.district <- data.frame(lapply(Correct.district, function(x) {gsub("west_bekaa", "West_Bekaa", x)}))
+Correct.district$district <- as.character(Correct.district$district)
+Correct.district$formid <- as.character(Correct.district$formid)
+
+Correct.district <- Correct.district[ , c("formid", "district") ]
+
+names(Correct.district)[1] <- "KEY"
+case_number_details <- merge(x = case_number_details, y = Correct.district, by = "KEY", all.x = TRUE)
+for (i in 1:nrow(case_number_details))
+{
+  #cat(paste0(i,"\n"))
+  if( !(is.na (case_number_details[ i, c("district") ]) ) )
+  { case_number_details[ i, c("section1.location.district") ] <- case_number_details[ i, c("district") ] } else {}
+}
+
+# Correct the district for CASE table based on updated cleaning script
+Correct.district <- read_excel("data/Cluster_reassignment_missing_script.xlsx", sheet = "table", skip = 1)
+#names(Correct.district)
+#"formid",    "district" ,   "cluster_number" , "org_district",  "org_cluster" ,   "unhcr_case_number"
+# "location_name" ,  "origin_or_replacement", "Assigned_District",    "Assigned_Cluster"
+
+## check different district naming scheme & correct
+table(case_number_details$section1.location.district)
+table(Correct.district$Assigned_District)
+Correct.district$Assigned_District <- sub(" ", "_", Correct.district$Assigned_District)
+Correct.district$Assigned_District <- sub("-", "_", Correct.district$Assigned_District)
+Correct.district <- Correct.district[ , c("formid", "Assigned_District") ]
+names(Correct.district)[1] <- "KEY"
+case_number_details <- merge(x = case_number_details, y = Correct.district, by = "KEY", all.x = TRUE)
+
+for (i in 1:nrow(case_number_details))
+{
+  #cat(paste0(i,"\n"))
+  if( !(is.na (case_number_details[ i, c("Assigned_District") ]) ) )
+  { case_number_details[ i, c("section1.location.district") ] <- case_number_details[ i, c("Assigned_District") ]} else {}
+}
+
+
+# Correct the district for CASE table based on final cleaning provided 
+
+Correct.district.final <- read_excel("data/Vasyr_Cluster_Assignment.xlsx",   sheet = "Sheet1")
+names(Correct.district.final)
+# "formid"            "Assigned_District" "Assigned_Cluster"
+names(Correct.district.final)[1] <- "KEY"
+names(Correct.district.final)[2] <- "Assigned_District2"
+Correct.district.final <- Correct.district.final[ , c("KEY", "Assigned_District2") ]
+
+# Check naming scheme of district & correct
+table(Correct.district.final$Assigned_District2)
+table(case_number_details$section1.location.district)
+Correct.district.final$Assigned_District2 <- sub(" ", "_", Correct.district.final$Assigned_District2)
+Correct.district.final$Assigned_District2 <- sub("-", "_", Correct.district.final$Assigned_District2)
+case_number_details <- merge(x = case_number_details, y = Correct.district.final, by = "KEY", all.x = TRUE)
+
+for (i in 1:nrow(case_number_details))
+{
+  #cat(paste0(i,"\n"))
+  if( !(is.na (case_number_details[ i, c("Assigned_District2") ]) ) )
+  { case_number_details[ i, c("section1.location.district") ] <- case_number_details[ i, c("Assigned_District2") ] } else {}
+}
+
+# Check districts ## check later after drop of forms
+#write.csv(case_number_details$section1.location.district, file = "out/district.check.csv")
+
+## Correct the cluster number for CASE table based on updated cleaning script
+Correct.clust.2 <- read_excel("data/Cluster_reassignment_missing_script.xlsx", sheet = "table", skip = 1)
+names(Correct.clust.2)
+#"formid",    "district" ,   "cluster_number" , "org_district",  "org_cluster" ,   "unhcr_case_number"
+# "location_name" ,  "origin_or_replacement", "Assigned_District",    "Assigned_Cluster"
+
+# check cluster numbers
+table(case_number_details$section1.location.cluster_number)
+table(Correct.clust.2$Assigned_Cluster)
+Correct.clust.2 <- Correct.clust.2[ , c("formid", "Assigned_Cluster") ]
+names(Correct.clust.2)[1] <- "KEY"
+case_number_details <- merge(x = case_number_details, y = Correct.clust.2, by = "KEY", all.x = TRUE)
+
+for (i in 1:nrow(case_number_details))
+{
+  #cat(paste0(i,"\n"))
+  if( !(is.na (case_number_details[ i, c("Assigned_Cluster") ]) ) )
+  { case_number_details[ i, c("section1.location.cluster_number") ] <- case_number_details[ i, c("Assigned_Cluster") ]} else {}
+}
+
+
+##### Correct the cluster number for CASE table based on final cleaning provided #########
+
+Correct.clus.final <- read_excel("data/Vasyr_Cluster_Assignment.xlsx",   sheet = "Sheet1")
+names(Correct.clus.final)
+# "formid"            "Assigned_District" "Assigned_Cluster"
+names(Correct.clus.final)[1] <- "KEY"
+names(Correct.clus.final)[3] <- "Assigned_Cluster2"
+Correct.clus.final <- Correct.clus.final[ , c("KEY", "Assigned_Cluster2")]
+
+# Check naming scheme of district & correct
+table(Correct.clus.final$Assigned_Cluster2)
+table(case_number_details$section1.location.cluster_number)
+case_number_details <- merge(x = case_number_details, y = Correct.clus.final, by = "KEY", all.x = TRUE)
+
+for (i in 1:nrow(case_number_details))
+{
+  #cat(paste0(i,"\n"))
+  if( !(is.na (case_number_details[ i, c("Assigned_Cluster2") ]) ) )
+  { case_number_details[ i, c("section1.location.cluster_number") ] <- case_number_details[ i, c("Assigned_Cluster2") ] } else {}
+}
+
+rm(Correct.district.final, Correct.CaseNo, Correct.cluster, Correct.district, Correct.district, Correct.Org, location, location.add, Correct.clus.final, Correct.clust.2)
+
 
 ### Backup Dataframes
 
@@ -250,14 +591,21 @@ individual_biodata <- individual_biodata[-dup.idv2[1],]
 #rm(cross.check)
 rm(drop.form, Correct.CaseNo, Correct.cluster, Correct.Cluster2, Correct.district, Correct.Org, location, location.add, dup.idv, dup.idv2)
 
-
-
-
-
+#### Check district and cluster assignment #####
+HH.check.clus.dist <- household[, c("section1.location.district", "section1.location.cluster_number", "KEY")]
+IDV.check.clus.dist <- individual_biodata[, c("section1.location.district", "section1.location.cluster_number", "KEY")]
+CASE.check.clus.dist <- case_number_details[, c("section1.location.district", "section1.location.cluster_number", "KEY")]
+write.csv(HH.check.clus.dist, file = "out/hh.dist.clus.check.csv")
+write.csv(IDV.check.clus.dist, file = "out/idv.dist.clus.check.csv")
+write.csv(CASE.check.clus.dist, file = "out/case.dist.clus.check.csv")
+rm(HH.check.clus.dist, IDV.check.clus.dist, CASE.check.clus.dist)
 #### Weighting data#####################################################
 
 weight <- read_excel("data/weight22_06-2017-2.xlsx",  sheet = "weight2206")
-
+#names(weight)
+#"Districts"              "Districtssp"       "Population.Individuals" "Population.HHsNS"      
+#"prop.in.sample"         "Sample.size"        "prop.in.pop"            "Design.Weight"         
+#"Normalized.Weight"
 ## Check the merge on location
 #location.vasyr.district <- as.data.frame(unique(household$section1.location.district))
 
@@ -274,12 +622,16 @@ weight <- read_excel("data/weight22_06-2017-2.xlsx",  sheet = "weight2206")
 
 ## Cf https://rpubs.com/trjohns/survey-cluster
 ## calculate fpc i.e the number of clusters that should be used to build the survey object
-fpc <- nrow(weight)
-weight$fpc <- fpc
+#fpc <- nrow(weight)
+#weight$fpc <- fpc
 
 ## Good -- let's trim the weight frame
-weight2 <- weight[ c("Districts",   "Normalized.Weight","fpc")]
+weight2 <- weight[ c("Districts",   "Normalized.Weight","Population.HHsNS", "Sample.size")]
 names(weight2)[1] <- "section1.location.district"
+names(weight2)[3] <- "fpc"
+
+fpc <- weight2$fpc
+  
 household <- join(x=household, y=weight2, by="section1.location.district")
 case_number_details <- join(x=case_number_details, y=weight2, by="section1.location.district")
 individual_biodata <- join(x=individual_biodata, y=weight2, by="section1.location.district")
