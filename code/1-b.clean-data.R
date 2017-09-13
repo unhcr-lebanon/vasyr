@@ -618,11 +618,11 @@ weight <- read_excel("data/weight22_06-2017-2.xlsx",  sheet = "weight2206")
 
 ## Cf https://rpubs.com/trjohns/survey-cluster
 ## calculate fpc i.e the number of clusters that should be used to build the survey object
-fpc <- nrow(weight)
-weight$fpc <- fpc
+#fpc <- nrow(weight)
+#weight$fpc <- fpc
 
 ## Good -- let's trim the weight frame
-weight2 <- weight[ c("Districts",   "Normalized.Weight", "fpc")]
+weight2 <- weight[ c("Districts",   "Normalized.Weight")]
 names(weight2)[1] <- "section1.location.district"
 household <- join(x=household, y=weight2, by="section1.location.district")
 case_number_details <- join(x=case_number_details, y=weight2, by="section1.location.district")

@@ -78,11 +78,11 @@ svymean(~household$HH4, household.survey, na.rm = TRUE)
 svymean(~household$HH56, household.survey, na.rm = TRUE)
 svymean(~household$HH7, household.survey, na.rm = TRUE)
 svymean(~household$lessthan4, household.survey, na.rm = TRUE)
-svymean(~individual_biodata$over59, individual_biodata.survey, na.rm = TRUE)
-svymean(~individual_biodata$under2, individual_biodata.survey, na.rm = TRUE)
-svymean(~individual_biodata$under5, individual_biodata.survey, na.rm = TRUE)
-svymean(~individual_biodata$y12to14, individual_biodata.survey, na.rm = TRUE)
-svymean(~individual_biodata$y15to17, individual_biodata.survey, na.rm = TRUE)
+svymean(~household$over59, household.survey, na.rm = TRUE)
+svymean(~household$under2, household.survey, na.rm = TRUE)
+svymean(~household$under5, household.survey, na.rm = TRUE)
+svymean(~household$y12to14, household.survey, na.rm = TRUE)
+svymean(~household$y15to17, household.survey, na.rm = TRUE)
 svymean(~household$MEB125, household.survey, na.rm = TRUE)
 svymean(~household$MEB125.greater, household.survey, na.rm = TRUE)
 svymean(~household$service.cost, household.survey, na.rm = TRUE)
@@ -98,8 +98,12 @@ svymean(~household$density1, household.survey, na.rm = TRUE)
 svymean(~household$density2, household.survey, na.rm = TRUE)
 svymean(~household$density3, household.survey, na.rm = TRUE)
 svymean(~household$density4, household.survey, na.rm = TRUE)
-svymean(~household$ppl.room.rm, household.survey, na.rm = TRUE)
+# issue with Infinity 
+#svymean(~household$ppl.room.rm, household.survey, na.rm = TRUE)
 svymean(~individual_biodata$dependents, individual_biodata.survey, na.rm = TRUE)
+svymean(~household$hh.dependents, household.survey, na.rm = TRUE)
+svytotal(~household$hh.dependents, household.survey, na.rm = TRUE)
+
 svymean(~household$needs, household.survey, na.rm = TRUE)
 svymean(~individual_biodata$needs.ind, individual_biodata.survey, na.rm = TRUE)
 svymean(~individual_biodata$non.related, individual_biodata.survey, na.rm = TRUE)
@@ -114,14 +118,78 @@ svymean(~household$HHH15, household.survey, na.rm = TRUE)
 svymean(~household$HHH15.18, household.survey, na.rm = TRUE)
 svymean(~household$HHH59, household.survey, na.rm = TRUE)
 
+# assistance 
+svymean(~household$any.assist.hh >=1, household.survey, na.rm = TRUE)
+svymean(~household$inkind.assist.hh >=1, household.survey, na.rm = TRUE)
+svymean(~household$hh.cash.assist, household.survey, na.rm = TRUE)
+svymean(~household$hh.food.vouchers, household.survey, na.rm = TRUE)
+svymean(~household$hh.mcap.assist, household.survey, na.rm = TRUE)
+svymean(~household$hh.win.assist, household.survey, na.rm = TRUE)
+svymean(~household$hh.fuel.card, household.survey, na.rm = TRUE)
+svymean(~household$hh.cash.for.rent, household.survey, na.rm = TRUE)
+svymean(~household$hh.cash.for.water, household.survey, na.rm = TRUE)
+svymean(~household$hh.cash.for.hygiene, household.survey, na.rm = TRUE)
+svymean(~household$hh.tech.assist, household.survey, na.rm = TRUE)
+svymean(~household$hh.technical.assistance, household.survey, na.rm = TRUE)
+svymean(~household$hh.food.inkind, household.survey, na.rm = TRUE)
+svymean(~household$hh.health.care, household.survey, na.rm = TRUE)
+svymean(~household$hh.fuel.subsidy, household.survey, na.rm = TRUE)
+svymean(~household$hh.rent.subsidy, household.survey, na.rm = TRUE)
+svymean(~household$hh.hygiene.kits, household.survey, na.rm = TRUE)
+svymean(~household$hh.other.nfi, household.survey, na.rm = TRUE)
+svymean(~household$hh.edu.hygiene, household.survey, na.rm = TRUE)
+svymean(~household$hh.desludging.ser, household.survey, na.rm = TRUE)
+svymean(~household$hh.solid.waste.bins, household.survey, na.rm = TRUE)
+svymean(~household$hh.solid.was.services, household.survey, na.rm = TRUE)
+svymean(~household$hh.water.trucking, household.survey, na.rm = TRUE)
+
 library(dplyr)
 
 # box plots with reordered district level
 debtdist <- household[ , c("section1.location.district", "income_expenditure.borrowing_debt.credit_total")]
 
 debtdist <- mutate(debtdist, district.ordered = reorder(section1.location.district, income_expenditure.borrowing_debt.credit_total, median, na.rm = TRUE))
-debtdist
 bwplot(district.ordered ~ income_expenditure.borrowing_debt.credit_total, data = debtdist)
+
+# rent by shelter 
+rent.shelt <- household[ , c("section3_household.housing.type_of_housing", "section3_household.housing.rent_amount")]
+rent.shelt <- mutate(rent.shelt, shelt.ordered = reorder(section3_household.housing.type_of_housing, section3_household.housing.rent_amount, mean, na.rm = TRUE))
+bwplot(shelt.ordered ~ section3_household.housing.rent_amount, xlim=c(-10000,3000000), data = rent.shelt, main="Average rent by shelter type", xlab="Rent (LBP)")
+
+rent.shelt2 <- household[ , c("section3_household.housing.type_of_housing", "section3_household.housing.rent_amount")]
+rent.shelt2 <- mutate(rent.shelt2, shelt.ordered = reorder(section3_household.housing.type_of_housing, section3_household.housing.rent_amount, median, na.rm = TRUE))
+bwplot(shelt.ordered ~ section3_household.housing.rent_amount, xlim=c(-10000,3000000), data = rent.shelt, main="Median rent by shelter type", xlab="Rent (LBP)")
+
+plot(densityplot(~section3_household.housing.rent_amount, data = household, groups = section3_household.housing.type_of_housing, auto.key = T, n=300000))
+plot(densityplot(~section3_household.housing.rent_amount, data = household, groups = section3_household.housing.type_of_housing == "Tent", auto.key = T))
+apt <- (household$section3_household.housing.type_of_housing == "Apartment/house (Not shared)") [ , c("TRUE")]
+####### graphing
+
+crosssfrequ.weight <-as.data.frame(prop.table(svytable(~section3_household.housing.rent_amount + section3_household.housing.type_of_housing, design =household.survey  ), margin = 2))
+names(crosssfrequ.weight)[1] <- "quest"
+names(crosssfrequ.weight)[2] <- "disag"
+crosssfrequ.weight$Freq2 <- paste0(round(crosssfrequ.weight$Freq*100,digits=1),"%")
+## Reorder factor
+cross <- dcast(crosssfrequ.weight, disag  ~ quest, value.var = "Freq")
+cross <- cross[ order(cross[ ,2], decreasing = TRUE) ,  ]
+crosssfrequ.weight$disag <- factor(crosssfrequ.weight$disag, levels = as.character(cross[ ,1]))
+
+
+## and now the graph
+ggplot(crosssfrequ.weight, aes(fill=crosssfrequ.weight$quest, y=crosssfrequ.weight$Freq, x=crosssfrequ.weight$disag)) +
+  geom_bar(colour="#2a87c8", stat ="identity", width=.8, aes(fill = quest), position = position_stack(reverse = TRUE)) +
+  guides(fill=FALSE) +
+  geom_label_repel(aes(label = Freq2), fill = "#2a87c8", color = 'white') +
+  ylab("Frequency") +
+  scale_y_continuous(labels=percent)+
+  xlab("") +
+  coord_flip() +
+  ggtitle("Rent amount by shelter type",
+          subtitle = paste0("Weighted results. Question response rate: ",percentreponse," .")) +
+  theme(plot.title=element_text(face="bold", size=9),
+        plot.background = element_rect(fill = "transparent",colour = NA))
+
+# rent by district 
 
 expdist <- household[ , c("section1.location.district", "income_expenditure.expenditure.expenditure_total")]
 
@@ -134,6 +202,9 @@ expdist2 <- household[ , c("section1.location.district", "income_expenditure.exp
 expdist2 <- mutate(expdist2, district.ordered = reorder(section1.location.district, income_expenditure.expenditure.expenditure_total, FUN = mean, na.rm = TRUE))
 bwplot(district.ordered ~ income_expenditure.expenditure.expenditure_total, data = expdist2, main = "Median Expenditure by District", xlab = "Expenditure")
 
+svymean(household$income_expenditure.expenditure.expenditure_total, design = household.survey)
+svyby(~section3_household.housing.rent_amount, ~section3_household.housing.type_of_housing, household.survey, svymean)
+check <- svyby(~section3_household.housing.rent_amount, ~section3_household.housing.type_of_housing, household.survey, svymean, na.rm=TRUE)
 
 ### checking needs
 
@@ -323,3 +394,7 @@ write.csv(breakdown.req1.rec, file = "out/primarybydist.csv")
 
 table <- svyby(~section7.critical_info.health_access1 == "Yes", ~section1.location.district, household.survey, svymean, na.rm=TRUE)
 
+svymean(~household$MEB125, household.survey, na.rm = TRUE)
+svymean(~household$MEB125.greater, household.survey, na.rm = TRUE)
+svymean(~household$SMEB, household.survey, na.rm = TRUE)
+svymean(~household$SMEB.MEB, household.survey, na.rm = TRUE)
