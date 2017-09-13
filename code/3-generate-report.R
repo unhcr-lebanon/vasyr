@@ -98,9 +98,9 @@ for(i in 1:nrow(chapters))
   cat("## Create weighted survey object", file=chapter.name , sep="\n", append=TRUE)
   ## Below is an unweighted survey design - you may adjust as necessary!
   #cat("household.survey <- svydesign(ids = ~ 1 ,  data = household,   )", file=chapter.name , sep="\n", append=TRUE)
-  cat("household.survey <- svydesign(ids = ~ section1.location.district ,  data = household,  weights = ~Normalized.Weight ,  fpc = ~fpc )", file=chapter.name , sep="\n", append=TRUE)
-  cat("case_number_details.survey <- svydesign(ids = ~ section1.location.district ,  data = case_number_details ,  weights = ~Normalized.Weight ,  fpc = ~fpc )", file=chapter.name , sep="\n", append=TRUE)
-  cat("individual_biodata.survey <- svydesign(ids = ~ section1.location.district ,  data = individual_biodata ,  weights = ~Normalized.Weight ,  fpc = ~fpc )", file=chapter.name , sep="\n", append=TRUE)
+  cat("household.survey <- svydesign(ids = ~ section1.location.district ,  data = household,  weights = ~Normalized.Weight)", file=chapter.name , sep="\n", append=TRUE)
+  cat("case_number_details.survey <- svydesign(ids = ~ section1.location.district ,  data = case_number_details ,  weights = ~Normalized.Weight)", file=chapter.name , sep="\n", append=TRUE)
+  cat("individual_biodata.survey <- svydesign(ids = ~ section1.location.district ,  data = individual_biodata ,  weights = ~Normalized.Weight)", file=chapter.name , sep="\n", append=TRUE)
 
 
   ### Selection of variable for analyisis of association - chisquarred
