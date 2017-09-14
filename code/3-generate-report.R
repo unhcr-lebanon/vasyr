@@ -24,11 +24,12 @@ library(koboloadeR)
 
 cat("\n\n Building dictionnary from the xlsform \n")
 
-rm(form)
-form <- "form.xls"
+#rm(form)
+#form <- "form.xls"
 ## Generate & Load dictionnary
-kobo_dico(form)
-dico <- read.csv(paste("data/dico_",form,".csv",sep=""), encoding="UTF-8", na.strings="")
+#kobo_dico(form)
+dico <- dico
+#dico <- read.csv(paste("data/dico_",form,".csv",sep=""), encoding="UTF-8", na.strings="")
 rm(form)
 
 
@@ -84,7 +85,7 @@ for(i in 1:nrow(chapters))
   cat("library(koboloadeR)", file=chapter.name , sep="\n", append=TRUE)
   cat("## Provide below the name of the form in xsl form - format should be xls not xlsx", file=chapter.name , sep="\n", append=TRUE)
   cat("form <- \"form.xls\"", file=chapter.name , sep="\n", append=TRUE)
-  cat("dico <- read.csv(paste0(mainDirroot,\"/data/dico_\",form,\".csv\"), encoding=\"UTF-8\", na.strings=\"\")", file=chapter.name , sep="\n", append=TRUE)
+  cat("dico <- dico", file=chapter.name , sep="\n", append=TRUE)
 
   cat("household <- read.csv(paste0(mainDirroot,\"/data/household.csv\"), encoding=\"UTF-8\", na.strings=\"NA\")", file=chapter.name , sep="\n", append=TRUE)
   cat("case_number_details <- read.csv(paste0(mainDirroot,\"/data/case_number_details.csv\"), encoding=\"UTF-8\", na.strings=\"NA\")", file=chapter.name , sep="\n", append=TRUE)
