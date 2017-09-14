@@ -111,7 +111,7 @@ for(i in 1:nrow(chapters))
   cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
 
 
-  chapterquestions <- dico[which(dico$chapter== chaptersname & dico$formpart=="questions"),
+  chapterquestions <- dico[which(dico$chapter== chaptersname),
                            c("chapter", "name", "label", "type", "qrepeatlabel", "fullname","listname") ]
 
   #levels(as.factor(as.character(dico[which(!(is.na(dico$chapter)) & dico$formpart=="questions"), c("type") ])))
