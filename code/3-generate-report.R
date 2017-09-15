@@ -24,12 +24,11 @@ library(koboloadeR)
 
 cat("\n\n Building dictionnary from the xlsform \n")
 
-#rm(form)
-#form <- "form.xls"
+rm(form)
+form <- "form.xls"
 ## Generate & Load dictionnary
 #kobo_dico(form)
-dico <- dico
-#dico <- read.csv(paste("data/dico_",form,".csv",sep=""), encoding="UTF-8", na.strings="")
+dico <- read.csv(paste("data/dico_",form,".csv",sep=""), encoding="UTF-8", na.strings="")
 rm(form)
 
 
@@ -40,7 +39,11 @@ cat("\n\n Building now the chapters of the reports in Rmd  format \n")
 chapters <- as.data.frame(unique(dico$chapter))
 names(chapters)[1] <- "Chapter"
 chapters <- as.data.frame(chapters[!is.na(chapters$Chapter), ])
+names(chapters)[1] <- "Chapter"
 
+chapters <- as.data.frame(chapters[c(2:7), ])
+names(chapters)[1] <- "Chapter"
+chapters <- as.data.frame(chapters[c(1:4, 6), ])
 names(chapters)[1] <- "Chapter"
 
 disaggregation <- dico[which(dico$disaggregation %in% c("facet","correlate")& dico$formpart=="questions"),
@@ -85,8 +88,8 @@ for(i in 1:nrow(chapters))
   cat("library(koboloadeR)", file=chapter.name , sep="\n", append=TRUE)
   cat("## Provide below the name of the form in xsl form - format should be xls not xlsx", file=chapter.name , sep="\n", append=TRUE)
   cat("form <- \"form.xls\"", file=chapter.name , sep="\n", append=TRUE)
-  cat("dico <- dico", file=chapter.name , sep="\n", append=TRUE)
-
+  cat("dico <- read.csv(paste0(mainDirroot,\"/data/dico_\",form,\".csv\"), encoding=\"UTF-8\", na.strings=\"\")", file=chapter.name , sep="\n", append=TRUE)
+  
   cat("household <- read.csv(paste0(mainDirroot,\"/data/household.csv\"), encoding=\"UTF-8\", na.strings=\"NA\")", file=chapter.name , sep="\n", append=TRUE)
   cat("case_number_details <- read.csv(paste0(mainDirroot,\"/data/case_number_details.csv\"), encoding=\"UTF-8\", na.strings=\"NA\")", file=chapter.name , sep="\n", append=TRUE)
   cat("individual_biodata <- read.csv(paste0(mainDirroot,\"/data/individual_biodata.csv\"), encoding=\"UTF-8\", na.strings=\"NA\")", file=chapter.name , sep="\n", append=TRUE)
@@ -207,15 +210,15 @@ for(i in 1:nrow(chapters))
     cat(paste0("## and now the graph"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("ggplot(frequ3, aes(x=frequ3$Var1, y=frequ3$mean)) +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("geom_bar(fill=\"#2a87c8\",colour=\"#2a87c8\", stat =\"identity\", width=.8) +"),file=chapter.name ,sep="\n",append=TRUE)
-    #cat(paste0("guides(fill=FALSE) +"),file=chapter.name ,sep="\n",append=TRUE)
-    #cat(paste0("geom_label_repel(aes(y = mean, label = freqper2), fill = \"#2a87c8\", color = 'white') +"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("guides(fill=FALSE) +"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("geom_label_repel(aes(y = mean, label = freqper2), fill = \"#2a87c8\", color = 'white') +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("ylab(\"Frequency\") +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("scale_y_continuous(labels=percent)+"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("xlab(\"\") +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("coord_flip() +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("ggtitle(\"",questions.label,"\","),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("subtitle = paste0(\"Weighted results. Question response rate: \",percentreponse,\" .\")) +"),file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("theme(plot.title=element_text(face=\"bold\", size=9),legend.direction = \"horizontal\", legend.position = \"bottom\", legend.box = \"horizontal\",legend.title=element_blank(),"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("theme(plot.title=element_text(face=\"bold\", size=9),"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("plot.background = element_rect(fill = \"transparent\",colour = NA))"),file=chapter.name ,sep="\n",append=TRUE)
         }
     #cat(paste0("}"),file=chapter.name ,sep="\n",append=TRUE)
