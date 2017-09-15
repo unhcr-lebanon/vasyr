@@ -125,6 +125,7 @@ household.check <- kobo_label(household.check , dico)
 household <- kobo_label(household , dico)
 
 cat("\n\nWrite backup\n")
+### Check that newly written csv files below are updated in the data folder
 
 write.csv(household, "data/household.csv")
 write.csv(case_number_details, "data/case_number_details.csv")
@@ -133,5 +134,5 @@ write.csv(difficulties_encountered, "data/difficulties_encountered.csv")
 write.csv(illegal_residence, "data/illegal_residence.csv")
 write.csv(legal_residence , "data/legal_residence.csv")
 write.csv(moved_returnee, "data/moved_returnee.csv")
-#write.csv(dico, "data/dico_form.xls.csv")
+write.csv(dico, "data/dico_form.xls.csv")
 
