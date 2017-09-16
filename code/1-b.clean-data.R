@@ -599,6 +599,64 @@ write.csv(HH.check.clus.dist, file = "out/hh.dist.clus.check.csv")
 write.csv(IDV.check.clus.dist, file = "out/idv.dist.clus.check.csv")
 write.csv(CASE.check.clus.dist, file = "out/case.dist.clus.check.csv")
 rm(HH.check.clus.dist, IDV.check.clus.dist, CASE.check.clus.dist)
+
+####### Adjust the shelter data for rent per month
+
+rent <- household[ , c("KEY", "section3_household.housing.rent_amount", "section3_household.housing.rent_period")]
+
+#class(rent)
+#class(rent$section3_household.housing.rent_period)
+rent$section3_household.housing.rent_period <- as.character(rent$section3_household.housing.rent_period)
+#table(rent$section3_household.housing.rent_period)
+
+rent$section3_household.housing.rent_period <- sub("One month", "1", rent$section3_household.housing.rent_period)
+rent$section3_household.housing.rent_period <- sub("12 months", "12", rent$section3_household.housing.rent_period)
+rent$section3_household.housing.rent_period <- sub("6 months", "6", rent$section3_household.housing.rent_period)
+rent$section3_household.housing.rent_period <- sub("3 months", "3", rent$section3_household.housing.rent_period)
+rent$section3_household.housing.rent_period <- as.integer(rent$section3_household.housing.rent_period)
+#class(rent$section3_household.housing.rent_period)
+
+rent$rentpermonth <- "trigger"
+rent$rentpermonth <- round(rent$section3_household.housing.rent_amount/rent$section3_household.housing.rent_period)
+#names(rent)
+names(rent)[2] <- "rent_amount_calc"
+names(rent)[3] <- "rent_period_calc"
+
+household <- merge(x = household, y = rent, by = "KEY", all.x = TRUE)
+
+####### Add facet for Governorate
+
+household$section1.location.gov <- household$section1.location.district
+household$section1.location.gov
+household$section1.location.district
+household$section1.location.gov <- sub("Mount Lebanon Aley", "Mount Lebanon", household$section1.location.gov)
+household$section1.location.gov <- sub("South Saida", "South", household$section1.location.gov)
+household$section1.location.gov <- sub("Bekaa Baalbek", "Baalbek-Hermel", household$section1.location.gov)
+household$section1.location.gov <- sub("South Hasbaya", "Nabatiye", household$section1.location.gov)
+household$section1.location.gov <- sub("Beirut Beirut", "Beirut", household$section1.location.gov)
+household$section1.location.gov <- sub("North El Minieh Dennie", "North", household$section1.location.gov)
+household$section1.location.gov <- sub("Mount Lebanon El_Meten", "Bekaa", household$section1.location.gov)
+household$section1.location.gov <- sub("Mount Lebanon Jbeil", "Mount Lebanon", household$section1.location.gov)
+household$section1.location.gov <- sub("North El Batroun", "North", household$section1.location.gov)
+household$section1.location.gov <- sub("Mount Lebanon Chouf", "Mount Lebanon", household$section1.location.gov)
+household$section1.location.gov <- sub("North Tripoli", "North", household$section1.location.gov)
+household$section1.location.gov <- sub("North Akkar", "Akkar", household$section1.location.gov)
+household$section1.location.gov <- sub("North El Koura", "North", household$section1.location.gov)
+household$section1.location.gov <- sub("South Jezzine", "South", household$section1.location.gov)
+household$section1.location.gov <- sub("Bekaa Zahle", "Bekaa", household$section1.location.gov)
+household$section1.location.gov <- sub("Mount Lebanon Baabda", "Mount Lebanon", household$section1.location.gov)
+household$section1.location.gov <- sub("South Marjaayoun", "Nabatiye", household$section1.location.gov)
+household$section1.location.gov <- sub("South El Nabatieh", "South", household$section1.location.gov)
+household$section1.location.gov <- sub("Bekaa West Bekaa", "Bekaa", household$section1.location.gov)
+household$section1.location.gov <- sub("Bekaa Rachaya", "Bekaa", household$section1.location.gov)
+household$section1.location.gov <- sub("Mount Lebanon Kesrwane", "Mount Lebanon", household$section1.location.gov)
+household$section1.location.gov <- sub("South Sour", "South", household$section1.location.gov)
+household$section1.location.gov <- sub("South Bent Jbeil", "Nabatiye", household$section1.location.gov)
+household$section1.location.gov <- sub("North Zgharta", "North", household$section1.location.gov)
+household$section1.location.gov <- sub("North Bcharre", "North", household$section1.location.gov)
+household$section1.location.gov <- sub("Bekaa El Hermel", "Baalbek-Hermel", household$section1.location.gov)
+
+write.csv(household, "data/household.csv")
 #### Weighting data#####################################################
 
 weight <- read_excel("data/weight22_06-2017-2.xlsx",  sheet = "weight2206")
