@@ -26,7 +26,7 @@ cat("\n\n Building dictionnary from the xlsform \n")
 rm(form)
 form <- "form.xls"
 ## Generate & Load dictionnary
-kobo_dico(form)
+#kobo_dico(form)
 dico <- read.csv(paste("data/dico_",form,".csv",sep=""), encoding="UTF-8", na.strings="")
 rm(form)
 
@@ -45,12 +45,16 @@ if( (nrow(chapters) == 1) & is.na(chapters$Chapter) ) {
   chapters <- as.data.frame(unique(dico$chapter))
   names(chapters)[1] <- "Chapter"
   } else {}
-  
-chapters <- as.data.frame(chapters[!is.na(chapters$Chapter), ])
 
+chapters <- as.data.frame(chapters[!is.na(chapters$Chapter), ])
 names(chapters)[1] <- "Chapter"
 
-## Get a list of variables to be used for ddisaggregation --- 
+chapters <- as.data.frame(chapters[c(2:7), ])
+names(chapters)[1] <- "Chapter"
+chapters <- as.data.frame(chapters[c(1:4, 6), ])
+names(chapters)[1] <- "Chapter"
+
+## Get a list of variables to be used for ddisaggregation ---
 disaggregation <- dico[which(dico$disaggregation %in% c("facet","correlate") & dico$formpart == "questions"),
                        c("chapter", "name", "label", "type", "qrepeatlabel", "fullname","disaggregation") ]
 
@@ -68,7 +72,7 @@ for(i in 1:nrow(chapters))
 ## TO DO : CHECK IF FILE EXIST - AND REQUEST USER TO DELETE BEFORE REGENERATING - SUGGESTING TO SAVE PREVIOUS UNDER NEW NAME
   if (file.exists(chapter.name)) file.remove(chapter.name)
 
-  
+
 ## TO DO : put in configuration file name of report, author, organisation & location
 ## TO DO : put in configuration wethere report should be portrait or landscape
   cat("---", file=chapter.name , sep="\n", append=TRUE)
@@ -99,8 +103,10 @@ for(i in 1:nrow(chapters))
   cat("form <- \"form.xls\"", file=chapter.name , sep="\n", append=TRUE)
   cat("dico <- read.csv(paste0(mainDirroot,\"/data/dico_\",form,\".csv\"), encoding=\"UTF-8\", na.strings=\"\")", file=chapter.name , sep="\n", append=TRUE)
 
-  
+
+
 ## TO DO: Use config file to load the different frame
+
   cat("household <- read.csv(paste0(mainDirroot,\"/data/household.csv\"), encoding=\"UTF-8\", na.strings=\"NA\")", file=chapter.name , sep="\n", append=TRUE)
   cat("case_number_details <- read.csv(paste0(mainDirroot,\"/data/case_number_details.csv\"), encoding=\"UTF-8\", na.strings=\"NA\")", file=chapter.name , sep="\n", append=TRUE)
   cat("individual_biodata <- read.csv(paste0(mainDirroot,\"/data/individual_biodata.csv\"), encoding=\"UTF-8\", na.strings=\"NA\")", file=chapter.name , sep="\n", append=TRUE)
@@ -110,15 +116,15 @@ for(i in 1:nrow(chapters))
   cat("case_number_details <- kobo_label(case_number_details , dico)", file=chapter.name , sep="\n", append=TRUE)
   cat("individual_biodata <- kobo_label(individual_biodata , dico)", file=chapter.name , sep="\n", append=TRUE)
 
-  
-  
+
+
 ## To do use configuration file to weight the data
   cat("## Create weighted survey object", file=chapter.name , sep="\n", append=TRUE)
   ## Below is an unweighted survey design - you may adjust as necessary!
   #cat("household.survey <- svydesign(ids = ~ 1 ,  data = household,   )", file=chapter.name , sep="\n", append=TRUE)
-  cat("household.survey <- svydesign(ids = ~ section1.location.district ,  data = household,  weights = ~Normalized.Weight ,  fpc = ~fpc )", file=chapter.name , sep="\n", append=TRUE)
-  cat("case_number_details.survey <- svydesign(ids = ~ section1.location.district ,  data = case_number_details ,  weights = ~Normalized.Weight ,  fpc = ~fpc )", file=chapter.name , sep="\n", append=TRUE)
-  cat("individual_biodata.survey <- svydesign(ids = ~ section1.location.district ,  data = individual_biodata ,  weights = ~Normalized.Weight ,  fpc = ~fpc )", file=chapter.name , sep="\n", append=TRUE)
+  cat("household.survey <- svydesign(ids = ~ section1.location.district ,  data = household,  weights = ~Normalized.Weight)", file=chapter.name , sep="\n", append=TRUE)
+  cat("case_number_details.survey <- svydesign(ids = ~ section1.location.district ,  data = case_number_details ,  weights = ~Normalized.Weight)", file=chapter.name , sep="\n", append=TRUE)
+  cat("individual_biodata.survey <- svydesign(ids = ~ section1.location.district ,  data = individual_biodata ,  weights = ~Normalized.Weight)", file=chapter.name , sep="\n", append=TRUE)
 
    cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
 
@@ -129,7 +135,7 @@ for(i in 1:nrow(chapters))
   cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
 
 
-  chapterquestions <- dico[which(dico$chapter== chaptersname & dico$formpart=="questions"),
+  chapterquestions <- dico[which(dico$chapter== chaptersname),
                            c("chapter", "name", "label", "type", "qrepeatlabel", "fullname","listname") ]
 
   #levels(as.factor(as.character(dico[which(!(is.na(dico$chapter)) & dico$formpart=="questions"), c("type") ])))
@@ -235,9 +241,9 @@ for(i in 1:nrow(chapters))
     cat(paste0("subtitle = paste0(\"Weighted results. Question response rate: \",percentreponse,\" .\")) +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("theme(plot.title=element_text(face=\"bold\", size=9),"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("plot.background = element_rect(fill = \"transparent\",colour = NA))"),file=chapter.name ,sep="\n",append=TRUE)
+
     }
-	
-	
+
     #cat(paste0("}"),file=chapter.name ,sep="\n",append=TRUE)
     ## Close chunk
     cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
@@ -359,7 +365,7 @@ for(i in 1:nrow(chapters))
       disag.listname <- as.character(disaggregation[ h , c("listname")])
       disag.variable <- paste0(questions.frame,"$",disag.name)
 
-	  
+
       if (disag.variable==questions.variable){
         cat(paste0("cat(\"\\n\")"),file=chapter.name , sep="\n", append=TRUE)
       } else {
@@ -400,8 +406,8 @@ for(i in 1:nrow(chapters))
      cat(paste0("## and now the graph"),file=chapter.name ,sep="\n",append=TRUE)
      cat(paste0("ggplot(crosssfrequ.weight, aes(fill=crosssfrequ.weight$quest, y=crosssfrequ.weight$Freq, x=crosssfrequ.weight$disag)) +"),file=chapter.name ,sep="\n",append=TRUE)
      cat(paste0("geom_bar(colour=\"#2a87c8\", stat =\"identity\", width=.8, aes(fill = quest), position = position_stack(reverse = TRUE)) +"),file=chapter.name ,sep="\n",append=TRUE)
-     cat(paste0("guides(fill=FALSE) +"),file=chapter.name ,sep="\n",append=TRUE)
-     cat(paste0("geom_label_repel(aes(label = Freq2), fill = \"#2a87c8\", color = 'white') +"),file=chapter.name ,sep="\n",append=TRUE)
+     #cat(paste0("guides(fill=FALSE) +"),file=chapter.name ,sep="\n",append=TRUE)
+     #cat(paste0("geom_label_repel(aes(label = Freq2), fill = \"#2a87c8\", color = 'white') +"),file=chapter.name ,sep="\n",append=TRUE)
      cat(paste0("ylab(\"Frequency\") +"),file=chapter.name ,sep="\n",append=TRUE)
      #cat(paste0("facet_wrap(~disag, ncol=3) +"),file=chapter.name ,sep="\n",append=TRUE)
      cat(paste0("scale_y_continuous(labels=percent)+"),file=chapter.name ,sep="\n",append=TRUE)
@@ -409,7 +415,7 @@ for(i in 1:nrow(chapters))
      cat(paste0("coord_flip() +"),file=chapter.name ,sep="\n",append=TRUE)
      cat(paste0("ggtitle(\"",questions.label,"\","),file=chapter.name ,sep="\n",append=TRUE)
      cat(paste0("subtitle = paste0(\"Weighted results. Question response rate: \",percentreponse,\" .\")) +"),file=chapter.name ,sep="\n",append=TRUE)
-     cat(paste0("theme(plot.title=element_text(face=\"bold\", size=9),"),file=chapter.name ,sep="\n",append=TRUE)
+     cat(paste0("theme(plot.title=element_text(face=\"bold\", size=9),legend.direction = \"horizontal\", legend.position = \"bottom\", legend.box = \"horizontal\",legend.title=element_blank(),"),file=chapter.name ,sep="\n",append=TRUE)
      cat(paste0("plot.background = element_rect(fill = \"transparent\",colour = NA))"),file=chapter.name ,sep="\n",append=TRUE)
 
     ## Close chunk
@@ -417,8 +423,8 @@ for(i in 1:nrow(chapters))
       }
     }
     }
-	
-	
+
+
 ### To DO : Offer option to insert in the report skeleton interpretation questions
       ###selectone.quali####################################################################
       #cat(paste("### Qualitative elements\n"),file=chapter.name ,sep="\n",append=TRUE)
@@ -462,7 +468,9 @@ for(i in 1:nrow(chapters))
     cat(paste0("ggplot(data=frequ, aes(x=frequ$Var1, y=frequ$Freq)) +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("geom_bar(fill=\"#2a87c8\",colour=\"white\", stat =\"identity\", width=.8)+"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("labs(x=\"\", y=\"Count\")+"),file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("theme(plot.title=element_text(face=\"bold\", size=9), plot.background = element_rect(fill = \"transparent\",colour = NA))"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("theme(plot.title=element_text(face=\"bold\", size=9),legend.direction = \"horizontal\", legend.position = \"bottom\", legend.box = \"horizontal\",legend.title=element_blank(),"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("plot.background = element_rect(fill = \"transparent\",colour = NA))"),file=chapter.name ,sep="\n",append=TRUE)
+
     ## Close chunk
     cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
 
@@ -525,8 +533,8 @@ for(i in 1:nrow(chapters))
           cat(paste0("## and now the graph"),file=chapter.name ,sep="\n",append=TRUE)
           cat(paste0("ggplot(crosssfrequ.weight, aes(fill=crosssfrequ.weight$quest, y=crosssfrequ.weight$Freq, x=crosssfrequ.weight$disag)) +"),file=chapter.name ,sep="\n",append=TRUE)
           cat(paste0("geom_bar(colour=\"#2a87c8\", stat =\"identity\", width=.8, aes(fill = quest), position = position_stack(reverse = TRUE)) +"),file=chapter.name ,sep="\n",append=TRUE)
-          cat(paste0("guides(fill=FALSE) +"),file=chapter.name ,sep="\n",append=TRUE)
-          cat(paste0("geom_label_repel(aes(label = Freq2), fill = \"#2a87c8\", color = 'white') +"),file=chapter.name ,sep="\n",append=TRUE)
+          #cat(paste0("guides(fill=FALSE) +"),file=chapter.name ,sep="\n",append=TRUE)
+          #cat(paste0("geom_label_repel(aes(label = Freq2), fill = \"#2a87c8\", color = 'white') +"),file=chapter.name ,sep="\n",append=TRUE)
           cat(paste0("ylab(\"Frequency\") +"),file=chapter.name ,sep="\n",append=TRUE)
           #cat(paste0("facet_wrap(~disag, ncol=3) +"),file=chapter.name ,sep="\n",append=TRUE)
           cat(paste0("scale_y_continuous(labels=percent)+"),file=chapter.name ,sep="\n",append=TRUE)
@@ -534,7 +542,7 @@ for(i in 1:nrow(chapters))
           cat(paste0("coord_flip() +"),file=chapter.name ,sep="\n",append=TRUE)
           cat(paste0("ggtitle(\"",questions.label,"\","),file=chapter.name ,sep="\n",append=TRUE)
           cat(paste0("subtitle = paste0(\"Weighted results.\")) +"),file=chapter.name ,sep="\n",append=TRUE)
-          cat(paste0("theme(plot.title=element_text(face=\"bold\", size=9),"),file=chapter.name ,sep="\n",append=TRUE)
+          cat(paste0("theme(plot.title=element_text(face=\"bold\", size=9),legend.direction = \"horizontal\", legend.position = \"bottom\", legend.box = \"horizontal\",legend.title=element_blank(),"),file=chapter.name ,sep="\n",append=TRUE)
           cat(paste0("plot.background = element_rect(fill = \"transparent\",colour = NA))"),file=chapter.name ,sep="\n",append=TRUE)
 
           ## Close chunk
@@ -603,15 +611,15 @@ for(i in 1:nrow(chapters))
 
     cat(paste0("ggplot(frequ1, aes(x=Var1, y=freqper)) +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("geom_bar(fill=\"#2a87c8\",colour=\"#2a87c8\", stat =\"identity\", width=.8) +"),file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("guides(fill=FALSE) +"),file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("geom_label_repel(aes(y = freqper, label = freqper2), fill = \"#2a87c8\", color = 'white') +"),file=chapter.name ,sep="\n",append=TRUE)
+    #cat(paste0("guides(fill=FALSE) +"),file=chapter.name ,sep="\n",append=TRUE)
+    #cat(paste0("geom_label_repel(aes(y = freqper, label = freqper2), fill = \"#2a87c8\", color = 'white') +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("ylab(\"Frequency\") +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("scale_y_continuous(labels=percent)+"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("xlab(\"\") +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("coord_flip() +"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("ggtitle(\"",questions.label,"\","),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("subtitle = paste0(\"Question response rate: \",percentreponse,\" .\")) +"),file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("theme(plot.title=element_text(face=\"bold\", size=9),"),file=chapter.name ,sep="\n",append=TRUE)
+    cat(paste0("theme(plot.title=element_text(face=\"bold\", size=9),legend.direction = \"horizontal\", legend.position = \"bottom\", legend.box = \"horizontal\",legend.title=element_blank(),"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("plot.background = element_rect(fill = \"transparent\",colour = NA))"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
     ###select.multi.rel######################################################################
