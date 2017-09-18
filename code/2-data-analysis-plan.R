@@ -6,10 +6,10 @@ library(koboloadeR)
 ## Load data & dico #############################################################################
 form <- "form.xls"
 dico <- read.csv(paste0(mainDir,"/data/dico_",form,".csv"), encoding="UTF-8", na.strings="")
-household <- read.csv(paste0(mainDir,"/data/household.csv"), encoding="UTF-8", na.strings="NA")
+household <- read.csv(paste0(mainDir,"/data/household1.csv"), encoding="UTF-8", na.strings="NA")
 household.back <- household
-case_number_details <- read.csv(paste0(mainDir,"/data/case_number_details.csv"), encoding="UTF-8", na.strings="NA")
-individual_biodata <- read.csv(paste0(mainDir,"/data/individual_biodata.csv"), encoding="UTF-8", na.strings="NA")
+case_number_details <- read.csv(paste0(mainDir,"/data/case_number_details1.csv"), encoding="UTF-8", na.strings="NA")
+individual_biodata <- read.csv(paste0(mainDir,"/data/individual_biodata1.csv"), encoding="UTF-8", na.strings="NA")
 
 
 ## Create the dicotemp #############################################################################
@@ -111,7 +111,7 @@ for(i in 1:nrow(indicator))
  rm(dicotemp,dicotemp1)
 
 ### check indicator type
-#household.check <- household[ , ((ncol(household.back)+1):ncol(household))]
+household.check <- household[ , ((ncol(household.back)+1):ncol(household))]
 #summary(household.check)
 ## label Variables
 household.check <- kobo_label(household.check , dico)
@@ -130,9 +130,9 @@ cat("\n\nWrite backup\n")
 write.csv(household, "data/household.csv")
 write.csv(case_number_details, "data/case_number_details.csv")
 write.csv(individual_biodata , "data/individual_biodata.csv")
-write.csv(difficulties_encountered, "data/difficulties_encountered.csv")
-write.csv(illegal_residence, "data/illegal_residence.csv")
-write.csv(legal_residence , "data/legal_residence.csv")
-write.csv(moved_returnee, "data/moved_returnee.csv")
+#write.csv(difficulties_encountered, "data/difficulties_encountered.csv")
+#write.csv(illegal_residence, "data/illegal_residence.csv")
+#write.csv(legal_residence , "data/legal_residence.csv")
+#write.csv(moved_returnee, "data/moved_returnee.csv")
 write.csv(dico, "data/dico_form.xls.csv")
 
