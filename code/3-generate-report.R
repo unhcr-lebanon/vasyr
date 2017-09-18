@@ -1,5 +1,4 @@
-#### Generate Rmd files for each chapter
-
+#### Generate Rmd files for each chapter ------
 
 ### Load the data
 household <- read.csv("data/household.csv", encoding="UTF-8", na.strings="NA")
@@ -38,16 +37,26 @@ cat("\n\n Building now the chapters of the reports in Rmd  format \n")
 
 chapters <- as.data.frame(unique(dico$chapter))
 names(chapters)[1] <- "Chapter"
+
+## Default behavior if no chapter was defined in xlsform
+if( (nrow(chapters) == 1) & is.na(chapters$Chapter) ) {
+  cat("Defautling questions allocation to chapter")
+  dico$chapter[ dico$type %in% c("select_one","select_multiple_d")] <- "report"
+  chapters <- as.data.frame(unique(dico$chapter))
+  names(chapters)[1] <- "Chapter"
+  } else {}
+  
 chapters <- as.data.frame(chapters[!is.na(chapters$Chapter), ])
 
 names(chapters)[1] <- "Chapter"
 
-disaggregation <- dico[which(dico$disaggregation %in% c("facet","correlate")& dico$formpart=="questions"),
+## Get a list of variables to be used for ddisaggregation --- 
+disaggregation <- dico[which(dico$disaggregation %in% c("facet","correlate") & dico$formpart == "questions"),
                        c("chapter", "name", "label", "type", "qrepeatlabel", "fullname","disaggregation") ]
 
-## for each chapter: create a Rmd file
+## for each chapter: create a Rmd file -------
 
-##Loop.chapter####################################################################################################
+##Loop.chapter ------------
 
 for(i in 1:nrow(chapters))
 {
@@ -56,10 +65,14 @@ for(i in 1:nrow(chapters))
   cat(paste(i, " - Render chapter for ",as.character(chapters[ i , 1]),"\n" ))
   chapter.name <- paste("code/report/",i,"-", chaptersname, "-chapter.Rmd", sep="")
 
-  ## Get the
+## TO DO : CHECK IF FILE EXIST - AND REQUEST USER TO DELETE BEFORE REGENERATING - SUGGESTING TO SAVE PREVIOUS UNDER NEW NAME
+  if (file.exists(chapter.name)) file.remove(chapter.name)
 
+  
+## TO DO : put in configuration file name of report, author, organisation & location
+## TO DO : put in configuration wethere report should be portrait or landscape
   cat("---", file=chapter.name , sep="\n", append=TRUE)
-  cat(paste("title: \"Preliminary exploration of results for Chapter: ",chaptersname , "- Draft not for distribution. \"", sep=""), file=chapter.name ,sep="\n", append=TRUE)
+  cat(paste("title: \"Preliminary exploration of results : ",chaptersname , "- Draft not for distribution. \"", sep=""), file=chapter.name ,sep="\n", append=TRUE)
   cat("author: \"Prepared by UNHCR\"", file=chapter.name ,sep="\n", append=TRUE)
   cat("date: \"Amman, prepared on the `r format(Sys.Date(),  '%d %B %Y')`\"", file=chapter.name ,sep="\n", append=TRUE)
   cat("output:",file=chapter.name ,sep="\n", append=TRUE)
@@ -86,6 +99,8 @@ for(i in 1:nrow(chapters))
   cat("form <- \"form.xls\"", file=chapter.name , sep="\n", append=TRUE)
   cat("dico <- read.csv(paste0(mainDirroot,\"/data/dico_\",form,\".csv\"), encoding=\"UTF-8\", na.strings=\"\")", file=chapter.name , sep="\n", append=TRUE)
 
+  
+## TO DO: Use config file to load the different frame
   cat("household <- read.csv(paste0(mainDirroot,\"/data/household.csv\"), encoding=\"UTF-8\", na.strings=\"NA\")", file=chapter.name , sep="\n", append=TRUE)
   cat("case_number_details <- read.csv(paste0(mainDirroot,\"/data/case_number_details.csv\"), encoding=\"UTF-8\", na.strings=\"NA\")", file=chapter.name , sep="\n", append=TRUE)
   cat("individual_biodata <- read.csv(paste0(mainDirroot,\"/data/individual_biodata.csv\"), encoding=\"UTF-8\", na.strings=\"NA\")", file=chapter.name , sep="\n", append=TRUE)
@@ -95,6 +110,9 @@ for(i in 1:nrow(chapters))
   cat("case_number_details <- kobo_label(case_number_details , dico)", file=chapter.name , sep="\n", append=TRUE)
   cat("individual_biodata <- kobo_label(individual_biodata , dico)", file=chapter.name , sep="\n", append=TRUE)
 
+  
+  
+## To do use configuration file to weight the data
   cat("## Create weighted survey object", file=chapter.name , sep="\n", append=TRUE)
   ## Below is an unweighted survey design - you may adjust as necessary!
   #cat("household.survey <- svydesign(ids = ~ 1 ,  data = household,   )", file=chapter.name , sep="\n", append=TRUE)
@@ -102,6 +120,7 @@ for(i in 1:nrow(chapters))
   cat("case_number_details.survey <- svydesign(ids = ~ section1.location.district ,  data = case_number_details ,  weights = ~Normalized.Weight ,  fpc = ~fpc )", file=chapter.name , sep="\n", append=TRUE)
   cat("individual_biodata.survey <- svydesign(ids = ~ section1.location.district ,  data = individual_biodata ,  weights = ~Normalized.Weight ,  fpc = ~fpc )", file=chapter.name , sep="\n", append=TRUE)
 
+   cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
 
   ### Selection of variable for analyisis of association - chisquarred
   selectvariable <- dico[dico$type %in% c("select_multiple_d","select_one") & !(is.na(dico$correlate)), c("chapter", "name", "label", "type", "qrepeatlabel", "fullname","disaggregation")]
@@ -131,11 +150,11 @@ for(i in 1:nrow(chapters))
 
   cat(paste("\n", j, " - Render question: ", questions.variable,"\n" ))
 
-  ## write question name
+  ## write question name --------
   cat("\n ",file=chapter.name , sep="\n",append=TRUE)
   cat(paste("## ", questions.label ,sep=""),file=chapter.name , sep="\n", append=TRUE)
 
-  ## Now create para based on question type
+  ## Now create para based on question type-------
 
 
 ###selectone###################################################################################################
@@ -217,6 +236,8 @@ for(i in 1:nrow(chapters))
     cat(paste0("theme(plot.title=element_text(face=\"bold\", size=9),"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("plot.background = element_rect(fill = \"transparent\",colour = NA))"),file=chapter.name ,sep="\n",append=TRUE)
     }
+	
+	
     #cat(paste0("}"),file=chapter.name ,sep="\n",append=TRUE)
     ## Close chunk
     cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
@@ -315,13 +336,19 @@ for(i in 1:nrow(chapters))
     cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
     }
       }
+
     ##selectone.crosstab#######################################################################
-    if (nrow(frequ) %in% c("0","1")){
-      cat(paste0("cat(\"No responses recorded for this question...\")"),file=chapter.name , sep="\n", append=TRUE)
-      cat("No responses recorded for this question...\n")
-    } else {
-    for(h in 1:nrow(disaggregation))
-    {
+      if (nrow(frequ) %in% c("0","1")){
+        cat("No responses recorded for this question...\n",file=chapter.name , sep="\n", append=TRUE)
+        cat("No responses recorded for this question...\n")
+        cat("\n", file=chapter.name, append=TRUE)
+      } else if(nrow(disaggregation)==0) {
+        cat(paste0("cat(\"No disaggregation requested for this question...\")"),file=chapter.name , sep="\n", append=TRUE)
+        cat("No  disaggregation requested for this question...\n")
+        cat("\n", file=chapter.name, append=TRUE)
+      } else {
+        for(h in 1:nrow(disaggregation))
+        {
       #h <-1
       ## Now getting level for each questions
       disag.name <- as.character(disaggregation[ h , c("fullname")])
@@ -332,6 +359,7 @@ for(i in 1:nrow(chapters))
       disag.listname <- as.character(disaggregation[ h , c("listname")])
       disag.variable <- paste0(questions.frame,"$",disag.name)
 
+	  
       if (disag.variable==questions.variable){
         cat(paste0("cat(\"\\n\")"),file=chapter.name , sep="\n", append=TRUE)
       } else {
@@ -389,17 +417,20 @@ for(i in 1:nrow(chapters))
       }
     }
     }
-    ###selectone.quali####################################################################
-    cat(paste("### Qualitative elements\n"),file=chapter.name ,sep="\n",append=TRUE)
-    ## Open chunk
-    cat(paste0("#### __Reflect__: Data quality and or suggestions to change questions  \n"),file=chapter.name ,sep="\n",append=TRUE)
-    cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("#### __Interpret__: Qualitative interpretations of data patterns  \n"),file=chapter.name ,sep="\n",append=TRUE)
-    cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("#### __Recommend__: Recommendation in terms of programmatic adjustment\n"),file=chapter.name ,sep="\n",append=TRUE)
-    cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("#### __Classify__: Level of sensitivity for the information  \n"),file=chapter.name ,sep="\n",append=TRUE)
-    cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
+	
+	
+### To DO : Offer option to insert in the report skeleton interpretation questions
+      ###selectone.quali####################################################################
+      #cat(paste("### Qualitative elements\n"),file=chapter.name ,sep="\n",append=TRUE)
+      ## Open chunk
+      #cat(paste0("#### __Reflect__: Data quality and or suggestions to change questions  \n"),file=chapter.name ,sep="\n",append=TRUE)
+      #cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
+      #cat(paste0("#### __Interpret__: Qualitative interpretations of data patterns  \n"),file=chapter.name ,sep="\n",append=TRUE)
+      #cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
+      #cat(paste0("#### __Recommend__: Recommendation in terms of programmatic adjustment\n"),file=chapter.name ,sep="\n",append=TRUE)
+      #cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
+      #cat(paste0("#### __Classify__: Level of sensitivity for the information  \n"),file=chapter.name ,sep="\n",append=TRUE)
+      #cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
 
 ##Decimal####################################################################################################
   } else if (questions.type =="decimal" | questions.type =="integer" ) {
@@ -511,17 +542,18 @@ for(i in 1:nrow(chapters))
         }
       }
     }
-    ####decimal.quali##########################################################################
-    cat(paste("### Qualitative elements  \n"),file=chapter.name ,sep="\n",append=TRUE)
-    ## Open chunk
-    cat(paste0("#### __Reflect__: Data quality and or suggestions to change questions  \n"),file=chapter.name ,sep="\n",append=TRUE)
-    cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("#### __Interpret__: Qualitative interpretations of data patterns   \n"),file=chapter.name ,sep="\n",append=TRUE)
-    cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("#### __Recommend__: Recommendation in terms of programmatic adjustment  \n"),file=chapter.name ,sep="\n",append=TRUE)
-    cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("#### __Classify__: Level of sensitivity for the information  \n"),file=chapter.name ,sep="\n",append=TRUE)
-    cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
+      ####decimal.quali##########################################################################
+      #cat(paste("### Qualitative elements  \n"),file=chapter.name ,sep="\n",append=TRUE)
+      ## Open chunk
+      #cat(paste0("#### __Reflect__: Data quality and or suggestions to change questions  \n"),file=chapter.name ,sep="\n",append=TRUE)
+      #cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
+      #cat(paste0("#### __Interpret__: Qualitative interpretations of data patterns   \n"),file=chapter.name ,sep="\n",append=TRUE)
+      #cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
+      #cat(paste0("#### __Recommend__: Recommendation in terms of programmatic adjustment  \n"),file=chapter.name ,sep="\n",append=TRUE)
+      #cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
+      #cat(paste0("#### __Classify__: Level of sensitivity for the information  \n"),file=chapter.name ,sep="\n",append=TRUE)
+      #cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
+
 
 ##select.multi####################################################################################################
   } else if ( questions.type =="select_multiple_d" ) {
@@ -535,7 +567,6 @@ for(i in 1:nrow(chapters))
     cat(paste0("### Tabulation"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("##Compute contengency table"),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("selectmultilist1 <- as.data.frame(dico[dico$type==\"select_multiple\" & dico$listname==\"",questions.listname, "\" & grepl(\"", questions.shortname,"\",dico$fullname)==TRUE , c(\"fullname\")])"),file=chapter.name ,sep="\n",append=TRUE)
-
 
     cat(paste0("names(selectmultilist1)[1] <- \"check\""),file=chapter.name ,sep="\n",append=TRUE)
     cat(paste0("check <- as.data.frame(names(",questions.frame ,"))"),file=chapter.name ,sep="\n",append=TRUE)
@@ -593,16 +624,16 @@ for(i in 1:nrow(chapters))
     cat(paste0("\n```\n", sep = '\n'), file=chapter.name, append=TRUE)
 
 
-    cat(paste("### Qualitative elements  \n"),file=chapter.name ,sep="\n",append=TRUE)
-    ## Open chunk
-    cat(paste0("#### __Reflect__: Data quality and or suggestions to change questions  \n"),file=chapter.name ,sep="\n",append=TRUE)
-    cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("#### __Interpret__: Qualitative interpretations of data patterns  \n"),file=chapter.name ,sep="\n",append=TRUE)
-    cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("#### __Recommend__: Recommendation in terms of programmatic adjustment  \n"),file=chapter.name ,sep="\n",append=TRUE)
-    cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
-    cat(paste0("#### __Classify__: Level of sensitivity for the information  \n"),file=chapter.name ,sep="\n",append=TRUE)
-    cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
+      #cat(paste("### Qualitative elements  \n"),file=chapter.name ,sep="\n",append=TRUE)
+      ## Open chunk
+      #cat(paste0("#### __Reflect__: Data quality and or suggestions to change questions  \n"),file=chapter.name ,sep="\n",append=TRUE)
+      #cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
+      #cat(paste0("#### __Interpret__: Qualitative interpretations of data patterns  \n"),file=chapter.name ,sep="\n",append=TRUE)
+      #cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
+      #cat(paste0("#### __Recommend__: Recommendation in terms of programmatic adjustment  \n"),file=chapter.name ,sep="\n",append=TRUE)
+      #cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
+      #cat(paste0("#### __Classify__: Level of sensitivity for the information  \n"),file=chapter.name ,sep="\n",append=TRUE)
+      #cat("_Insert your notes here!_  \n",file=chapter.name ,sep="\n",append=TRUE)
 
 
 

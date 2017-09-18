@@ -11,6 +11,7 @@ cat("\n\n\nNow re-encode data and label variables \n\n\n\n")
 
 
 cat("\n\n\n Household \n\n\n\n")
+# household1 <- kobo_split_multiple(household, dico)
 household <- kobo_split_multiple(household, dico)
 household <- kobo_encode(household, dico)
 household <- kobo_label(household , dico)
